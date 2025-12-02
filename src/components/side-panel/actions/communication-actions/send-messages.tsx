@@ -91,7 +91,7 @@ const MOCK_MEDIA_LIBRARY = [
   { id: "media-4", name: "Terms and Conditions.pdf", url: "/media/terms.pdf", type: "document" },
   { id: "media-5", name: "FAQ Document.docx", url: "/media/faq.docx", type: "document" },
   { id: "media-6", name: "Contact Card.png", url: "/media/contact-card.png", type: "image" },
-] as const;
+];
 
 const SendMessagesAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();

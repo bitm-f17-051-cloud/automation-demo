@@ -193,8 +193,8 @@ const cloneNodeTemplate = (
     ...restOverrides,
     id: overrideId ?? uuidv4(),
     position: {
-      ...(template.position ? { ...template.position } : {}),
-      ...(overridePosition || {}),
+      x: overridePosition?.x ?? template.position?.x ?? 0,
+      y: overridePosition?.y ?? template.position?.y ?? 0,
     },
     measured: overrideMeasured
       ? { ...overrideMeasured }
