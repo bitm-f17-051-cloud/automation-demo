@@ -6,8 +6,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   ReactFlow,
   Background,
-  MiniMap,
-  Controls,
   useReactFlow,
   ReactFlowProvider,
   Node,
@@ -47,7 +45,6 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
   const [activeTab, setActiveTab] = useState<"editor" | "executions" | "published">("editor");
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
   const [workflowOwner] = useState("John Doe"); // In real app, get from auth
   const [workflowCreated] = useState(new Date("2024-11-01"));
   const [workflowId] = useState(() => `wf_${Math.random().toString(36).substring(2, 11)}`);
@@ -586,31 +583,6 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
         }}
       >
         <Background />
-        
-        <MiniMap
-          nodeStrokeColor={(node: Node) => {
-            if (node.type === 'start') return '#3b82f6';
-            if (node.type === 'end') return '#10b981';
-            if (node.type === 'action') return '#8b5cf6';
-            if (node.type === 'condition') return '#f59e0b';
-            return '#6b7280';
-          }}
-          nodeColor={(node: Node) => {
-            if (node.type === 'start') return '#dbeafe';
-            if (node.type === 'end') return '#d1fae5';
-            if (node.type === 'action') return '#ede9fe';
-            if (node.type === 'condition') return '#fed7aa';
-            return '#f3f4f6';
-          }}
-          nodeBorderRadius={8}
-          maskColor="rgb(240, 240, 240, 0.6)"
-          className="bg-white border rounded-lg shadow-md"
-          position="bottom-right"
-        />
-        <Controls 
-          className="bg-white border rounded-lg shadow-md" 
-          showInteractive={false}
-        />
       </ReactFlow>
 
       {/* Removed old canvas options and minimap as requested */}
@@ -748,210 +720,87 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
         </div>
       )}
 
-      {/* Bottom-left controls: zoom, undo/redo, keyboard shortcuts */}
-      <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2 bg-white rounded-lg shadow-md border p-1">
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center"
-              onClick={onZoomOut}
-            >
-              <span className="text-lg leading-none">−</span>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Zoom out
-          </HoverCardContent>
-        </HoverCard>
-
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center"
-              onClick={onZoomIn}
-            >
-              <span className="text-lg leading-none">+</span>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Zoom in
-          </HoverCardContent>
-        </HoverCard>
-
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center"
-              onClick={onAddActionOrTrigger}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M10 4h4v4h-4zM4 10h4v4H4zM10 16h4v4h-4zM16 10h4v4h-4z" />
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Add node
-          </HoverCardContent>
-        </HoverCard>
-
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center"
-              onClick={onAddTrigger}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm-6 5h12v2H6v-2zm-2 4h16v2H4v-2z" />
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Add trigger
-          </HoverCardContent>
-        </HoverCard>
-
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className={`w-8 h-8 rounded-md border bg-white grid place-items-center ${
-                !canUndo() ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              onClick={undo}
-              disabled={!canUndo()}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M7 7L3 11L7 15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 17a8 8 0 0 0-8-8H3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Undo (Ctrl+Z)
-          </HoverCardContent>
-        </HoverCard>
-
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className={`w-8 h-8 rounded-md border bg-white grid place-items-center ${
-                !canRedo() ? "opacity-50 cursor-not-allowed" : ""
-              }`}
-              onClick={redo}
-              disabled={!canRedo()}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M17 7L21 11L17 15" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 17a8 8 0 0 1 8-8h10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Redo (Ctrl+Y)
-          </HoverCardContent>
-        </HoverCard>
-
-        {/* Fix Layout */}
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center hover:bg-blue-50"
-              onClick={onFixLayout}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M21 16V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 8v8M8 12h8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Fix Layout
-          </HoverCardContent>
-        </HoverCard>
-
-        {/* Fit to Screen */}
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center hover:bg-gray-50"
-              onClick={() => reactFlowInstance.fitView({ padding: 0.2, minZoom: 0.1, maxZoom: 1.5 })}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M16 21h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Fit to Screen
-          </HoverCardContent>
-        </HoverCard>
-
-        {/* Divider */}
-        <div className="w-px h-6 bg-gray-300" />
-
-        {/* Keyboard Shortcuts */}
-        <HoverCard openDelay={150}>
-          <HoverCardTrigger asChild>
-            <button
-              className="w-8 h-8 rounded-md border bg-white grid place-items-center hover:bg-gray-50"
-              onClick={() => setShowKeyboardShortcuts(true)}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent side="top" className="py-1 px-2 text-xs w-auto">
-            Keyboard Shortcuts (?)
-          </HoverCardContent>
-        </HoverCard>
-      </div>
-
-      {/* Keyboard Shortcuts Modal */}
-      {showKeyboardShortcuts && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center" onClick={() => setShowKeyboardShortcuts(false)}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Keyboard Shortcuts</h3>
-              <button onClick={() => setShowKeyboardShortcuts(false)} className="text-gray-400 hover:text-gray-600">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Undo</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Ctrl+Z</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Redo</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Ctrl+Y</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Save</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Ctrl+S</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Delete Node</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Del</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Duplicate Node</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">Ctrl+D</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Zoom In</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">+</kbd>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Zoom Out</span>
-                <kbd className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">-</kbd>
-              </div>
-            </div>
-          </div>
+      {/* Canvas Controls - Bottom Left */}
+      <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
+        {/* Zoom Controls Group */}
+        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
+          <button
+            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
+            onClick={onZoomOut}
+            title="Zoom out"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+              <path d="M8 11h6"/>
+            </svg>
+          </button>
+          <button
+            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
+            onClick={onZoomIn}
+            title="Zoom in"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+              <path d="M11 8v6M8 11h6"/>
+            </svg>
+          </button>
         </div>
-      )}
+
+        {/* Fullscreen & Document Group */}
+        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
+          <button
+            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
+            onClick={() => reactFlowInstance.fitView({ padding: 0.2, minZoom: 0.1, maxZoom: 1.5 })}
+            title="Fit to screen"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+          </button>
+          <button
+            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
+            onClick={() => {}}
+            title="Document"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Undo/Redo Group */}
+        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
+          <button
+            className={`w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors ${
+              !canUndo() ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={undo}
+            disabled={!canUndo()}
+            title="Undo"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 7v6h6"/>
+              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+            </svg>
+          </button>
+          <button
+            className={`w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors ${
+              !canRedo() ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            onClick={redo}
+            disabled={!canRedo()}
+            title="Redo"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 7v6h-6"/>
+              <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
