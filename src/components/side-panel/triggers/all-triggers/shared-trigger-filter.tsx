@@ -1,0 +1,420 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Input } from "@/components/ui/input";
+import PrimaryButton from "@/components/ui/primary-button";
+import { Separator } from "@/components/ui/separator";
+import { useWorkflowStore } from "@/store/workflow.store";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { XIcon, Trash2, Plus } from "lucide-react";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
+import { Checkbox } from "@/components/ui/checkbox";
+
+type Props = {
+  goBack: () => void;
+  nodeData: { [key: string]: any } | undefined;
+  triggerValue: string;
+  triggerLabel: string;
+  triggerIcon: any;
+  triggerDescription: string;
+};
+
+// Trigger Output Fields - Nested structure
+const TRIGGER_OUTPUT_FIELDS = [
+  // Root level
+  { value: "id", label: "ID", category: "root" },
+  { value: "direction", label: "direction", category: "root" },
+  { value: "status", label: "status", category: "root" },
+  { value: "started_at", label: "started_at", category: "root" },
+  { value: "ended_at", label: "ended_at", category: "root" },
+  { value: "duration", label: "duration", category: "root" },
+  { value: "missed_call", label: "missed_call", category: "root" },
+  { value: "recording_url", label: "recording_url", category: "root" },
+  { value: "voicemail", label: "voicemail", category: "root" },
+  
+  // Users object
+  { value: "users.id", label: "ID", category: "users" },
+  { value: "users.name", label: "name", category: "users" },
+  { value: "users.email", label: "email", category: "users" },
+  
+  // Contacts object
+  { value: "contacts.id", label: "ID", category: "contacts" },
+  { value: "contacts.name", label: "name", category: "contacts" },
+  { value: "contacts.phone_number.value", label: "value", category: "contacts.phone_number" },
+  { value: "contacts.number.id", label: "id", category: "contacts.number" },
+  { value: "contacts.number.name", label: "name", category: "contacts.number" },
+  { value: "contacts.number.digits", label: "digits", category: "contacts.number" },
+  { value: "contacts.tags", label: "tags", category: "contacts" },
+  { value: "contacts.notes", label: "notes", category: "contacts" },
+  { value: "contacts.custom_fields", label: "custom_fields", category: "contacts" },
+] as const;
+
+// Text field comparison operators
+const COMPARISON_OPERATORS = [
+  "Is",
+  "Is not",
+  "Contains",
+  "Does not contain",
+  "Is any of (comma separated)",
+  "Is none of (comma separated)",
+  "Is not empty",
+  "Is empty"
+] as const;
+
+type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
+
+const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, triggerIcon, triggerDescription }: Props) => {
+  const IconComponent = triggerIcon;
+  const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
+
+  const [triggerName, setTriggerName] = useState<string>(nodeData?.nodeName || triggerLabel || "Trigger");
+  
+  // Event Types
+  const [eventTypes, setEventTypes] = useState<{ [k: string]: boolean }>(() => {
+    if (nodeData?.nodeData?.eventTypes) {
+      return nodeData.nodeData.eventTypes;
+    }
+    return {
+      "Strategy Event": false,
+      "Discovery Event": false,
+    };
+  });
+
+  // Row-based filters with AND/OR logic
+  type FilterRow = { 
+    id: string; 
+    type: FilterType; 
+    values: string[]; // for Event/Contact Stage
+    textValue?: string; // for text field filters
+    comparisonOperator?: typeof COMPARISON_OPERATORS[number]; // comparison operator for text fields
+    operator?: "AND" | "OR"; // operator before this row
+  };
+  
+  const bootstrapRows: FilterRow[] = (() => {
+    const rows: FilterRow[] = [];
+    const nd = nodeData?.nodeData;
+    if (nd?.filters && nd.filters.length > 0) {
+      nd.filters.forEach((filter: any) => {
+        rows.push({
+          id: uuidv4(),
+          type: filter.type,
+          values: filter.values || [],
+          textValue: filter.textValue || "",
+          comparisonOperator: filter.comparisonOperator || "Is",
+          operator: filter.operator || "AND"
+        });
+      });
+    }
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" });
+    return rows;
+  })();
+  const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
+
+  const setRowType = (rowId: string, type: FilterType) =>
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, values: [], textValue: "", comparisonOperator: "Is" } : r)));
+  
+  const toggleRowValue = (rowId: string, value: string) =>
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id !== rowId
+          ? r
+          : {
+              ...r,
+              values: r.values.includes(value)
+                ? r.values.filter((v) => v !== value)
+                : [...r.values, value],
+            }
+      )
+    );
+  
+  const setRowTextValue = (rowId: string, textValue: string) =>
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, textValue } : r)));
+  
+  const setRowComparisonOperator = (rowId: string, comparisonOperator: typeof COMPARISON_OPERATORS[number]) =>
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, comparisonOperator } : r)));
+  
+  const setRowOperator = (rowId: string, operator: "AND" | "OR") =>
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, operator } : r)));
+  
+  const removeRow = (rowId: string) =>
+    setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
+  
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" }]);
+
+  const saveAction = () => {
+    if (!selectedNodeId) return;
+    const properties: Array<{ key: string; value: any }> = [];
+    
+    // Add event types to properties if any are selected
+    if (Object.values(eventTypes).some(v => v)) {
+      properties.push({
+        key: "Event Type",
+        value: Object.entries(eventTypes)
+          .filter(([_, selected]) => selected)
+          .map(([type]) => type)
+          .join(", ")
+      });
+    }
+    
+    // Save all filter rows
+    const filters = rows.filter(r => r.type).map(r => ({
+      type: r.type,
+      values: r.values,
+      textValue: r.textValue || "",
+      comparisonOperator: r.comparisonOperator || "Is",
+      operator: r.operator || "AND"
+    }));
+
+    filters.forEach((filter) => {
+      if (filter.type) {
+        properties.push({ 
+          key: `${filter.operator}_${filter.type}`, 
+          value: filter.textValue 
+        });
+      }
+    });
+
+    const config = {
+      nodeType: triggerValue,
+      nodeName: triggerName,
+      nodeIcon: triggerValue,
+      nodeDescription: "",
+      nodeData: {
+        eventTypes: eventTypes,
+        filters: filters,
+      },
+      properties,
+    };
+    updateNodeConfig(selectedNodeId, config, !nodeData);
+    goBack();
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="space-y-6">
+          {/* Trigger Name */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Trigger Name</label>
+            <Input
+              placeholder="Enter a name for this trigger"
+              className="h-10 text-sm"
+              value={triggerName}
+              onChange={(e) => setTriggerName(e.target.value)}
+            />
+          </div>
+
+          <Separator />
+
+          {/* Event Type */}
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-900">Event Type <span className="text-red-500">*</span></h4>
+            <div className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50">
+              {/* Select All */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={Object.values(eventTypes).every(v => v)}
+                  onCheckedChange={(checked) => {
+                    const newState = checked === true;
+                    setEventTypes({
+                      "Strategy Event": newState,
+                      "Discovery Event": newState,
+                    });
+                  }}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
+                  Select All
+                </span>
+              </label>
+
+              {/* Strategy Event */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={eventTypes["Strategy Event"]}
+                  onCheckedChange={() => setEventTypes((s) => ({ ...s, "Strategy Event": !s["Strategy Event"] }))}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                  Strategy Event
+                </span>
+              </label>
+
+              {/* Discovery Event */}
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <Checkbox
+                  checked={eventTypes["Discovery Event"]}
+                  onCheckedChange={() => setEventTypes((s) => ({ ...s, "Discovery Event": !s["Discovery Event"] }))}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                  Discovery Event
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Filters Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="text-base font-semibold text-gray-900">Filters</h4>
+              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-gray-600 bg-gray-100 rounded">
+                {rows.length}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 -mt-1">Specify when this trigger should fire</p>
+
+            <div className="space-y-4">
+              {rows.map((row, index) => {
+                return (
+                  <div key={row.id} className="space-y-3">
+                    {/* AND/OR Toggle - show before each filter except the first */}
+                    {index > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Select value={row.operator || "AND"} onValueChange={(value: "AND" | "OR") => setRowOperator(row.id, value)}>
+                          <SelectTrigger className="h-9 w-32 bg-white border-gray-300">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="AND">AND</SelectItem>
+                            <SelectItem value="OR">OR</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      {/* Filter Type + Comparison Operator Row */}
+                      <div className="flex items-center gap-3">
+                        <Select value={row.type} onValueChange={(value) => setRowType(row.id, value as FilterType)}>
+                          <SelectTrigger className="flex-1 h-11 bg-white border-gray-300 text-gray-900">
+                            <SelectValue placeholder="Select filter" className="text-gray-900" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[400px]">
+                            {/* Root level fields */}
+                            <SelectItem value="id" className="font-mono text-xs">ID</SelectItem>
+                            <SelectItem value="direction" className="font-mono text-xs">direction</SelectItem>
+                            <SelectItem value="status" className="font-mono text-xs">status</SelectItem>
+                            <SelectItem value="started_at" className="font-mono text-xs">started_at</SelectItem>
+                            <SelectItem value="ended_at" className="font-mono text-xs">ended_at</SelectItem>
+                            <SelectItem value="duration" className="font-mono text-xs">duration</SelectItem>
+                            <SelectItem value="missed_call" className="font-mono text-xs">missed_call</SelectItem>
+                            <SelectItem value="recording_url" className="font-mono text-xs">recording_url</SelectItem>
+                            <SelectItem value="voicemail" className="font-mono text-xs">voicemail</SelectItem>
+                            
+                            {/* Users object */}
+                            <div className="px-2 py-1 text-xs font-semibold text-gray-900 mt-1">users</div>
+                            <SelectItem value="users.id" className="pl-6 font-mono text-xs">ID</SelectItem>
+                            <SelectItem value="users.name" className="pl-6 font-mono text-xs">name</SelectItem>
+                            <SelectItem value="users.email" className="pl-6 font-mono text-xs">email</SelectItem>
+                            
+                            {/* Contacts object */}
+                            <div className="px-2 py-1 text-xs font-semibold text-gray-900 mt-1">contacts</div>
+                            <SelectItem value="contacts.id" className="pl-6 font-mono text-xs">ID</SelectItem>
+                            <SelectItem value="contacts.name" className="pl-6 font-mono text-xs">name</SelectItem>
+                            
+                            {/* Contacts.phone_number nested */}
+                            <div className="pl-6 py-1 text-xs font-medium text-gray-700">phone_number</div>
+                            <SelectItem value="contacts.phone_number.value" className="pl-10 font-mono text-xs">value</SelectItem>
+                            
+                            {/* Contacts.number nested */}
+                            <div className="pl-6 py-1 text-xs font-medium text-gray-700">number</div>
+                            <SelectItem value="contacts.number.id" className="pl-10 font-mono text-xs">id</SelectItem>
+                            <SelectItem value="contacts.number.name" className="pl-10 font-mono text-xs">name</SelectItem>
+                            <SelectItem value="contacts.number.digits" className="pl-10 font-mono text-xs">digits</SelectItem>
+                            
+                            {/* Remaining contacts fields */}
+                            <SelectItem value="contacts.tags" className="pl-6 font-mono text-xs">tags</SelectItem>
+                            <SelectItem value="contacts.notes" className="pl-6 font-mono text-xs">notes</SelectItem>
+                            <SelectItem value="contacts.custom_fields" className="pl-6 font-mono text-xs">custom_fields</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {row.type && (
+                          <Select 
+                            value={row.comparisonOperator || "Is"} 
+                            onValueChange={(value) => setRowComparisonOperator(row.id, value as typeof COMPARISON_OPERATORS[number])}
+                          >
+                            <SelectTrigger className="w-[180px] h-11 bg-white border-gray-300 text-gray-900">
+                              <SelectValue className="text-gray-900" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                              {COMPARISON_OPERATORS.map((op) => (
+                                <SelectItem key={op} value={op}>{op}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+
+                        {/* Delete button */}
+                        {rows.length > 1 && (
+                          <button
+                            onClick={() => removeRow(row.id)}
+                            className="w-11 h-11 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 flex items-center justify-center transition-colors flex-shrink-0"
+                            title="Remove filter"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Filter Value Input - Full Width on New Row */}
+                      {row.type && row.comparisonOperator !== "Is empty" && row.comparisonOperator !== "Is not empty" && (
+                        <Input
+                          placeholder="Write option"
+                          className="w-full h-11 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+                          value={row.textValue || ""}
+                          onChange={(e) => setRowTextValue(row.id, e.target.value)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add Filter Button */}
+            <button
+              onClick={addRow}
+              className="w-fit py-2 px-3 mt-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-all flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Add filter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-gray-200 px-6 py-4 bg-white">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={goBack}
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+          >
+            Cancel
+          </button>
+          <PrimaryButton
+            onClick={saveAction}
+            isPrimary
+            className="px-6"
+          >
+            Save Trigger
+          </PrimaryButton>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SharedTriggerFilter;
+

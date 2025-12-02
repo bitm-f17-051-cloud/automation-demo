@@ -1,0 +1,41 @@
+export const UserIcon = ({ className }: { className?: string }) => {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <g clipPath="url(#clip0_55_23177)">
+        <path
+          d="M5.33301 4.66667C5.33301 5.37391 5.61396 6.05219 6.11406 6.55229C6.61415 7.05238 7.29243 7.33333 7.99967 7.33333C8.70692 7.33333 9.3852 7.05238 9.88529 6.55229C10.3854 6.05219 10.6663 5.37391 10.6663 4.66667C10.6663 3.95942 10.3854 3.28115 9.88529 2.78105C9.3852 2.28095 8.70692 2 7.99967 2C7.29243 2 6.61415 2.28095 6.11406 2.78105C5.61396 3.28115 5.33301 3.95942 5.33301 4.66667Z"
+          stroke="#6B7280"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 14V12.6667C4 11.9594 4.28095 11.2811 4.78105 10.781C5.28115 10.281 5.95942 10 6.66667 10H9.33333"
+          stroke="#6B7280"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M10 12.6668L11.3333 14.0002L14 11.3335"
+          stroke="#6B7280"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_55_23177">
+          <rect width="16" height="16" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+};
