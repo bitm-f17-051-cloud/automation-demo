@@ -645,168 +645,86 @@ export const useWorkflowStore = create<WorkflowState>()(
                 node.id !== nodeId
             );
 
-            // If multiple triggers exist, we need to merge them
+            // If multiple triggers exist, connect them all directly to the action node
             if (isTriggerNode && configuredTriggers.length > 0) {
-              // Find or create a merge node
-              let mergeNode = updatedNodes.find(
-                (node: WorkflowNode) => 
-                  node.type === "intermediate" && 
-                  node.data?.config?.nodeType === "flow_merge"
+              // Find the action node that the first configured trigger connects to (if any)
+              const firstTrigger = configuredTriggers[0];
+              const firstTriggerEdge = tempEdges.find(
+                (edge: WorkflowEdge) => edge.source === firstTrigger.id
               );
+              let actionNode = firstTriggerEdge
+                ? updatedNodes.find((node: WorkflowNode) => node.id === firstTriggerEdge.target)
+                : null;
 
-              if (!mergeNode) {
-                // Find the action node that the first configured trigger connects to (if any)
-                const firstTrigger = configuredTriggers[0];
-                const firstTriggerEdge = tempEdges.find(
-                  (edge: WorkflowEdge) => edge.source === firstTrigger.id
-                );
-                const existingActionNode = firstTriggerEdge
-                  ? updatedNodes.find((node: WorkflowNode) => node.id === firstTriggerEdge.target)
-                  : null;
-
-                // Create merge node
-                const mergeNodeId = uuidv4();
-                mergeNode = {
-                  id: mergeNodeId,
-                  type: "intermediate" as const,
+              // If no existing action node, create a new one
+              if (!actionNode) {
+                actionNode = cloneNodeTemplate(EMPTY_ACTION_NODE, {
                   position: {
                     x: DEFAULT_NODE_X_POSITION - DEFAULT_ACTION_NODE_WIDTH / 2,
                     y: nodeBeforeEmptyActionNode.position.y + 48 + DEFAULT_NODES_SPACING,
                   },
-                  measured: { width: 312, height: 48 },
-                  data: {
-                    label: "Merge",
-                    config: {
-                      nodeType: "flow_merge",
-                      nodeName: "Merge",
-                    },
-                  },
-                };
-                updatedNodes.push(mergeNode);
+                });
+                updatedNodes.push(actionNode);
 
-                // If there's an existing action node, disconnect first trigger from it and connect merge node to it
-                if (existingActionNode && firstTriggerEdge) {
-                  // Remove the edge from first trigger to action node
-                  const edgeIndex = tempEdges.findIndex(
-                    (edge: WorkflowEdge) => edge.id === firstTriggerEdge.id
-                  );
-                  if (edgeIndex !== -1) {
-                    tempEdges.splice(edgeIndex, 1);
-                  }
-
-                  // Connect merge node to existing action node
-                  const mergeToActionEdge = {
-                    id: `edge-${mergeNodeId}-${existingActionNode.id}`,
-                    source: mergeNodeId,
-                    target: existingActionNode.id,
-                    sourceHandle: "output",
-                    targetHandle: "input",
-                  };
-                  tempEdges.push(mergeToActionEdge);
-                } else {
-                  // No existing action node, create a new one
-                  const newActionNode = cloneNodeTemplate(EMPTY_ACTION_NODE, {
-                    position: {
-                      x: DEFAULT_NODE_X_POSITION - DEFAULT_ACTION_NODE_WIDTH / 2,
-                      y: mergeNode.position.y + 48 + DEFAULT_NODES_SPACING,
-                    },
-                  });
-
-                  updatedNodes.push(newActionNode);
-
-                  // Connect merge node to action node
-                  const mergeToActionEdge = {
-                    id: `edge-${mergeNodeId}-${newActionNode.id}`,
-                    source: mergeNodeId,
-                    target: newActionNode.id,
-                    sourceHandle: "output",
-                    targetHandle: "input",
-                  };
-                  tempEdges.push(mergeToActionEdge);
-
-                  // Update end node position if it exists
-                  const endNode = updatedNodes.find(
-                    (node: WorkflowNode) => node.type === "end"
-                  );
-                  if (endNode) {
-                    endNode.position.y =
-                      newActionNode.position.y +
-                      (newActionNode.measured?.height ?? 0) +
-                      DEFAULT_NODES_SPACING;
-                  }
+                // Update end node position if it exists
+                const endNode = updatedNodes.find(
+                  (node: WorkflowNode) => node.type === "end"
+                );
+                if (endNode) {
+                  endNode.position.y =
+                    actionNode.position.y +
+                    (actionNode.measured?.height ?? 0) +
+                    DEFAULT_NODES_SPACING;
                 }
+              }
 
-                // Connect all configured triggers to merge node
-                configuredTriggers.forEach((trigger: WorkflowNode) => {
-                  // Check if trigger already has an edge (to avoid duplicates)
-                  const existingEdge = tempEdges.find(
+              // Connect all configured triggers directly to the action node
+              configuredTriggers.forEach((trigger: WorkflowNode) => {
+                // Check if trigger already has an edge to this action node
+                const existingEdge = tempEdges.find(
+                  (edge: WorkflowEdge) => edge.source === trigger.id && edge.target === actionNode!.id
+                );
+                if (!existingEdge) {
+                  // Remove any existing edge from this trigger (might be to merge node or different action)
+                  const oldEdge = tempEdges.find(
                     (edge: WorkflowEdge) => edge.source === trigger.id
                   );
-                  if (!existingEdge || existingEdge.target !== mergeNodeId) {
-                    // Remove existing edge if it exists
-                    if (existingEdge) {
-                      const edgeIndex = tempEdges.findIndex(
-                        (edge: WorkflowEdge) => edge.id === existingEdge.id
-                      );
-                      if (edgeIndex !== -1) {
-                        tempEdges.splice(edgeIndex, 1);
-                      }
+                  if (oldEdge) {
+                    const edgeIndex = tempEdges.findIndex(
+                      (edge: WorkflowEdge) => edge.id === oldEdge.id
+                    );
+                    if (edgeIndex !== -1) {
+                      tempEdges.splice(edgeIndex, 1);
                     }
-                    // Add new edge to merge node
-                    const mergeEdge = {
-                      id: `edge-${trigger.id}-${mergeNodeId}`,
-                      source: trigger.id,
-                      target: mergeNodeId,
-                      sourceHandle: "output",
-                      targetHandle: "input",
-                    };
-                    tempEdges.push(mergeEdge);
                   }
-                });
+                  // Add new edge directly to action node
+                  const triggerToActionEdge = {
+                    id: `edge-${trigger.id}-${actionNode!.id}`,
+                    source: trigger.id,
+                    target: actionNode!.id,
+                    sourceHandle: "output",
+                    targetHandle: "input",
+                  };
+                  tempEdges.push(triggerToActionEdge);
+                }
+              });
 
-                // Connect current trigger to merge node
-                const currentTriggerEdge = {
-                  id: `edge-${nodeId}-${mergeNodeId}`,
-                  source: nodeId,
-                  target: mergeNodeId,
-                  sourceHandle: "output",
-                  targetHandle: "input",
-                };
-                tempEdges.push(currentTriggerEdge);
+              // Connect current trigger directly to the action node
+              const currentTriggerEdge = {
+                id: `edge-${nodeId}-${actionNode.id}`,
+                source: nodeId,
+                target: actionNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              };
+              tempEdges.push(currentTriggerEdge);
 
-                // Find the action node to select (either existing or newly created)
-                const actionNode = existingActionNode || updatedNodes.find(
-                  (node: WorkflowNode) => 
-                    node.type === "action" && 
-                    tempEdges.find((edge: WorkflowEdge) => 
-                      edge.source === mergeNodeId && edge.target === node.id
-                    )
-                );
-
-                return {
-                  nodes: updatedNodes,
-                  edges: tempEdges,
-                  selectedNodeId: actionNode?.id || mergeNodeId,
-                  selectedNodeType: actionNode ? "action" : "intermediate",
-                };
-              } else {
-                // Merge node exists, just connect current trigger to it
-                const currentTriggerEdge = {
-                  id: `edge-${nodeId}-${mergeNode.id}`,
-                  source: nodeId,
-                  target: mergeNode.id,
-                  sourceHandle: "output",
-                  targetHandle: "input",
-                };
-                tempEdges.push(currentTriggerEdge);
-
-                return {
-                  nodes: updatedNodes,
-                  edges: tempEdges,
-                  selectedNodeId: mergeNode.id,
-                  selectedNodeType: "intermediate",
-                };
-              }
+              return {
+                nodes: updatedNodes,
+                edges: tempEdges,
+                selectedNodeId: actionNode.id,
+                selectedNodeType: "action",
+              };
             }
 
             const endNodeId = tempEdges.find(

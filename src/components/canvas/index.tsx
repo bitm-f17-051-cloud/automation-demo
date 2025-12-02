@@ -189,6 +189,10 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
       draggable: false,
       selectable: false,
       selected: false,
+      measured: {
+        width: triggerWidth,
+        height: 48,
+      },
     };
 
     mappedNodes.push(addTriggerNode);
