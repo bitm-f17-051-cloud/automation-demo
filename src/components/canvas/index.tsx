@@ -27,8 +27,6 @@ import { useWorkflowWorker } from "@/hooks/useWorkflowWorker";
 // removed default canvas options and minimap
 import { v4 as uuidv4 } from "uuid";
 import { EMPTY_ACTION_NODE, EMPTY_TRIGGER_NODE } from "@/store/workflow.store";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "../ui/hover-card";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 interface WorkflowCanvasProps {
@@ -757,6 +755,16 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            </svg>
+          </button>
+          <button
+            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
+            onClick={onFixLayout}
+            title="Fix layout"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/>
+              <path d="M12 8v8M8 12h8"/>
             </svg>
           </button>
           <button

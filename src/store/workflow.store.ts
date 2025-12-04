@@ -252,6 +252,10 @@ export interface WorkflowState {
     numberOfConditions?: number,
     branches?: WorkflowNode["data"]["config"][]
   ) => void;
+  addEmptyActionNodesForRouter: (
+    nodeId: string,
+    numberOfRoutes?: number
+  ) => void;
   deleteNode: (nodeId: string) => void;
   addEdge: (edge: WorkflowEdge) => void;
   updateEdge: (edgeId: string, updates: Partial<WorkflowEdge>) => void;
@@ -399,8 +403,11 @@ export const useWorkflowStore = create<WorkflowState>()(
         
         // Then add empty nodes if needed
         if (shouldAddEmptyActionNode) {
-          if (config?.nodeName === "If/Else" || config?.nodeName === "Router") {
+          if (config?.nodeName === "If/Else") {
             get().addEmptyConditionNodes(nodeId, noOfBranches, branches);
+          } else if (config?.nodeName === "Router") {
+            // For routers, directly create action nodes without condition nodes
+            get().addEmptyActionNodesForRouter(nodeId, noOfBranches);
           } else {
             get().addEmptyActionNode(nodeId);
           }
@@ -429,6 +436,10 @@ export const useWorkflowStore = create<WorkflowState>()(
               JSON.stringify(state.edges)
             );
 
+            // Check if this is a router node
+            const node = tempNodes.find((n) => n.id === nodeId);
+            const isRouter = node?.data?.config?.nodeType === "flow_router" || node?.data?.config?.nodeName === "Router";
+
             const updatedNodes = tempNodes.map((node) =>
               node.id === nodeId
                 ? {
@@ -444,26 +455,33 @@ export const useWorkflowStore = create<WorkflowState>()(
             const nodesToDelete = new Set<string>();
             const edgesToDelete = new Set<string>();
 
-            // First, find all condition nodes that need to be deleted
-            const conditionNodesToDelete = updatedNodes.filter(
-              (node) =>
-                branchesToDelete.includes(node.data.label) &&
-                node.type === "condition"
-            );
+            // For routers, find action nodes to delete; for if/else, find condition nodes
+            const nodesToDeleteList = isRouter
+              ? updatedNodes.filter(
+                  (node) =>
+                    branchesToDelete.includes(node.data.label || node.data.config?.nodeName) &&
+                    node.type === "action" &&
+                    tempEdges.some((edge) => edge.source === nodeId && edge.target === node.id)
+                )
+              : updatedNodes.filter(
+                  (node) =>
+                    branchesToDelete.includes(node.data.label) &&
+                    node.type === "condition"
+                );
 
-            // For each condition node to delete, find all connected nodes in the branch
-            for (const conditionNode of conditionNodesToDelete) {
-              nodesToDelete.add(conditionNode.id);
+            // For each node to delete, find all connected nodes in the branch
+            for (const nodeToDelete of nodesToDeleteList) {
+              nodesToDelete.add(nodeToDelete.id);
 
-              // Find and delete incoming edges to this condition node (from intermediate node)
+              // Find and delete incoming edges to this node (from router/intermediate node)
               const incomingEdges = tempEdges.filter(
-                (edge) => edge.target === conditionNode.id
+                (edge) => edge.target === nodeToDelete.id
               );
               for (const edge of incomingEdges) {
                 edgesToDelete.add(edge.id);
               }
 
-              // Find all nodes connected to this condition node (action nodes, end nodes, etc.)
+              // Find all nodes connected to this node (action nodes, end nodes, etc.)
               const findConnectedNodes = (nodeId: string) => {
                 // Find edges that start from this node
                 const outgoingEdges = tempEdges.filter(
@@ -484,7 +502,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                 }
               };
 
-              findConnectedNodes(conditionNode.id);
+              findConnectedNodes(nodeToDelete.id);
             }
 
             // Remove all identified nodes and edges
@@ -501,6 +519,87 @@ export const useWorkflowStore = create<WorkflowState>()(
             tempEdges.length = 0;
             tempEdges.push(...filteredEdges);
 
+            // For routers, skip condition nodes and create action nodes directly
+            if (isRouter) {
+              const routerNode = updatedNodes.find((n) => n.id === nodeId);
+              if (!routerNode) {
+                return { nodes: updatedNodes, edges: tempEdges };
+              }
+
+              // Find existing action nodes connected to router
+              const existingActionNodeIds = tempEdges
+                .filter((edge) => edge.source === nodeId)
+                .map((edge) => edge.target);
+              const actionNodes = updatedNodes.filter((node) =>
+                existingActionNodeIds.includes(node.id) && node.type === "action"
+              );
+
+              const totalWidth = (branches.length - 1) * CONDITION_NODE_SPACING;
+              const startX = DEFAULT_NODE_X_POSITION - totalWidth / 2;
+              const baseY = routerNode.position.y + (routerNode.measured?.height ?? 48) + DEFAULT_NODES_SPACING;
+
+              const newNodes = [];
+              const newEdges = [];
+
+              for (const [index, branch] of branches.entries()) {
+                if (branch) {
+                  const actionNode = actionNodes[index];
+                  if (!actionNode) {
+                    // Create new action node directly connected to router
+                    const newActionNode = {
+                      ...EMPTY_ACTION_NODE,
+                      id: uuidv4(),
+                      position: {
+                        x:
+                          startX +
+                          index * CONDITION_NODE_SPACING -
+                          DEFAULT_ACTION_NODE_WIDTH / 2,
+                        y: baseY,
+                      },
+                    };
+
+                    const endNode = {
+                      ...EMPTY_END_NODE,
+                      id: uuidv4(),
+                      position: {
+                        x:
+                          startX +
+                          index * CONDITION_NODE_SPACING -
+                          EMPTY_END_NODE.measured!.width / 2,
+                        y: baseY + 48 + DEFAULT_NODES_SPACING,
+                      },
+                    };
+
+                    newNodes.push(newActionNode, endNode);
+
+                    // Connect router directly to action node
+                    newEdges.push({
+                      id: `${nodeId}-${newActionNode.id}`,
+                      source: nodeId,
+                      target: newActionNode.id,
+                      sourceHandle: "output",
+                      targetHandle: "input",
+                    });
+
+                    // Connect action node to end node
+                    newEdges.push({
+                      id: `${newActionNode.id}-${endNode.id}`,
+                      source: newActionNode.id,
+                      target: endNode.id,
+                      sourceHandle: "output",
+                      targetHandle: "input",
+                    });
+                  }
+                }
+              }
+
+              return {
+                nodes: [...updatedNodes, ...newNodes],
+                edges: [...tempEdges, ...newEdges],
+              };
+            }
+
+            // For if/else, use the original logic with condition nodes
             const intermediateConditionNodeIds = state.edges
               .filter((edge) => edge.source === nodeId)
               .map((edge) => edge.target);
@@ -954,6 +1053,130 @@ export const useWorkflowStore = create<WorkflowState>()(
           },
           false,
           "addEmptyConditionNodes"
+        );
+      },
+
+      addEmptyActionNodesForRouter: (
+        nodeId,
+        numberOfRoutes = 2
+      ) => {
+        // Don't track empty action node additions in history as they're automatic
+        return set(
+          (state) => {
+            const updatedNodes = JSON.parse(JSON.stringify(state.nodes));
+            const updatedEdges = JSON.parse(JSON.stringify(state.edges));
+
+            // Find the router node
+            const routerNodeIndex = updatedNodes.findIndex(
+              (node: WorkflowNode) => node.id === nodeId
+            );
+            const routerNode = updatedNodes[routerNodeIndex];
+            
+            if (!routerNode) return { nodes: updatedNodes, edges: updatedEdges };
+
+            // Find the target node if there's an outgoing edge
+            const outgoingEdge = updatedEdges.find(
+              (edge: WorkflowEdge) => edge.source === nodeId
+            );
+            
+            let endNodeIndex = -1;
+            let endEdgeIndex = -1;
+            
+            if (outgoingEdge) {
+              endNodeIndex = updatedNodes.findIndex(
+                (node: WorkflowNode) => node.id === outgoingEdge.target
+              );
+              endEdgeIndex = updatedEdges.findIndex(
+                (edge: WorkflowEdge) => edge.source === nodeId
+              );
+            }
+
+            let previousNodeHeight = routerNode.measured?.height ?? 48;
+
+            const baseY =
+              routerNode.position.y +
+              previousNodeHeight +
+              DEFAULT_NODES_SPACING;
+
+            // Calculate total width needed for all action nodes
+            const totalWidth =
+              (numberOfRoutes - 1) * CONDITION_NODE_SPACING;
+            const startX = DEFAULT_NODE_X_POSITION - totalWidth / 2;
+
+            const newNodes = [];
+            const newEdges = [];
+
+            // Create action nodes directly connected to router (skip condition nodes)
+            for (let i = 0; i < numberOfRoutes; i++) {
+              const actionNode = {
+                ...EMPTY_ACTION_NODE,
+                id: uuidv4(),
+                position: {
+                  x:
+                    startX +
+                    i * CONDITION_NODE_SPACING -
+                    DEFAULT_ACTION_NODE_WIDTH / 2,
+                  y: baseY,
+                },
+              };
+
+              // Create an end node for this route
+              const endNode = {
+                ...EMPTY_END_NODE,
+                id: uuidv4(),
+                position: {
+                  x:
+                    startX +
+                    i * CONDITION_NODE_SPACING -
+                    EMPTY_END_NODE.measured!.width / 2,
+                  y: baseY + 48 + DEFAULT_NODES_SPACING,
+                },
+              };
+
+              newNodes.push(actionNode, endNode);
+
+              // Connect router node directly to action node
+              newEdges.push({
+                id: `${nodeId}-${actionNode.id}`,
+                source: nodeId,
+                target: actionNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              });
+
+              // Connect action node to end node
+              newEdges.push({
+                id: `${actionNode.id}-${endNode.id}`,
+                source: actionNode.id,
+                target: endNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              });
+            }
+
+            // Remove the original end node and edge if they exist
+            if (endNodeIndex >= 0) {
+              updatedNodes.splice(endNodeIndex, 1);
+            }
+            if (endEdgeIndex >= 0) {
+              updatedEdges.splice(endEdgeIndex, 1);
+            }
+
+            // Insert all new nodes
+            if (endNodeIndex >= 0) {
+              updatedNodes.splice(endNodeIndex, 0, ...newNodes);
+            } else {
+              // If no end node, just add the new nodes at the end
+              updatedNodes.push(...newNodes);
+            }
+
+            return {
+              nodes: updatedNodes,
+              edges: [...updatedEdges, ...newEdges],
+            };
+          },
+          false,
+          "addEmptyActionNodesForRouter"
         );
       },
 

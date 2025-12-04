@@ -195,7 +195,7 @@ export const ConditionNode: React.FC<NodeProps> = (props) => {
                       </p>
                     )}
                     {branchType === "else" && (
-                      <p className="text-[11px] text-gray-500">Default branch</p>
+                      <p className="text-[11px] text-gray-500">When no condition is met</p>
                     )}
                   </div>
                 </>
@@ -212,12 +212,6 @@ export const ConditionNode: React.FC<NodeProps> = (props) => {
                   </div>
                 </>
               )}
-            </div>
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="h-6 w-6 bg-gray-900 rounded-full flex items-center justify-center text-xs font-semibold text-white">
-                {nodeIndex + 1}
-              </div>
             </div>
           </>
         )}

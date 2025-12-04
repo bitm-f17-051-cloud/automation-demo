@@ -163,16 +163,13 @@ export const ActionNode: React.FC<NodeProps> = (props) => {
               <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
                 <EventIconRenderer iconType={config.nodeIcon || config.nodeType} className="w-5 h-5" />
               </div>
-              <div className="flex flex-1 min-w-0">
+              <div className="flex flex-col flex-1 min-w-0">
                 <h3 className="font-medium text-sm text-gray-900 truncate">
                   {config.nodeName}
                 </h3>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="h-6 w-6 bg-gray-900 rounded-full flex items-center justify-center text-xs font-semibold text-white">
-                {nodeIndex + 1}
+                <p className="text-[10px] text-gray-400 leading-tight font-mono">
+                  {config.nodeType}
+                </p>
               </div>
             </div>
           </>

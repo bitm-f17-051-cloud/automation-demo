@@ -32,7 +32,7 @@ const HTTP_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const;
 const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
-  const [actionName, setActionName] = useState(nodeData?.nodeName || "Inbound Webhook");
+  const [actionName, setActionName] = useState(nodeData?.nodeName || "Outbound Webhook");
   const [method, setMethod] = useState<typeof HTTP_METHODS[number]>(
     nodeData?.nodeData?.method || "POST"
   );
@@ -117,7 +117,7 @@ const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-gray-900">Inbound Webhook</h2>
+          <h2 className="text-base font-semibold text-gray-900">Outbound Webhook</h2>
           <button
             onClick={goBack}
             className="p-1 hover:bg-gray-100 rounded transition-colors"

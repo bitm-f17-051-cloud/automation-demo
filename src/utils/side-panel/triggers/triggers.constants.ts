@@ -54,7 +54,7 @@ export const SCHEDULER_TRIGGERS = {
   },
   WATCH_CALL_BOOKED: {
     value: 'scheduler_watch_call_booked',
-    label: 'Call Booked',
+    label: 'Call Created',
     icon: PhoneIcon,
     category: 'Scheduler',
     description: 'Triggers when a new call is scheduled.'

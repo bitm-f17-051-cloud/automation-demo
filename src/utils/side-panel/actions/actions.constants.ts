@@ -175,13 +175,16 @@ export const FLOW_ACTIONS = {
     icon: Split,
     category: 'FLOW',
     description: 'Route to different workflow paths'
-  },
-  INBOUND_WEBHOOK: {
+  }
+} as const;
+
+export const INTEGRATIONS_ACTIONS = {
+  OUTBOUND_WEBHOOK: {
     value: 'flow_inbound_webhook',
-    label: 'Inbound Webhook',
+    label: 'Outbound Webhook',
     icon: WebhookIcon,
-    category: 'FLOW',
-    description: 'Receive data from external webhook'
+    category: 'INTEGRATIONS',
+    description: 'Send data to external webhook'
   }
 } as const;
 
@@ -214,7 +217,8 @@ export const getAllActions = () => {
     ...Object.values(CALL_ACTIONS),
     ...Object.values(CONTACT_ACTIONS),
     ...Object.values(SEARCH_ACTIONS),
-    ...Object.values(COMMUNICATION_ACTIONS)
+    ...Object.values(COMMUNICATION_ACTIONS),
+    ...Object.values(INTEGRATIONS_ACTIONS)
   ];
 };
 

@@ -159,6 +159,9 @@ export const StartNode: React.FC<NodeProps> = (props) => {
                 <h3 className="font-medium text-sm text-gray-900 truncate leading-tight">
                   {config.nodeSubtitle || config.nodeName}
                 </h3>
+                <p className="text-[10px] text-gray-400 leading-tight font-mono">
+                  {config.nodeType}
+                </p>
                 {filterCount > 0 && (
                   <p className="text-[11px] text-gray-500 leading-tight">
                     {filterCount} {filterCount === 1 ? 'filter' : 'filters'} selected

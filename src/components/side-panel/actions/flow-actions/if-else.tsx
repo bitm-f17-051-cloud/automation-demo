@@ -626,8 +626,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
                   ) : (
                     <div className="p-4">
                       <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-gray-700">Default Branch</p>
-                        <p className="text-xs text-gray-500 mt-1">When no condition is met</p>
+                        <p className="text-sm font-medium text-gray-700">When no condition is met</p>
                       </div>
                     </div>
                   )}
