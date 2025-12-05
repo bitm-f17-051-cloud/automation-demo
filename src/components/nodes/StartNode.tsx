@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { NodeProps } from "@xyflow/react";
-import { Play, PlusIcon, Edit2, Trash2, Copy, MoreVertical, CheckCircle, AlertCircle } from "lucide-react";
+import { Play, PlusIcon, Edit2, Trash2, Copy, MoreVertical, CheckCircle, AlertCircle, Zap, Power } from "lucide-react";
 import { BaseNode } from "./BaseNode";
 import { WorkflowNode } from "@/lib/worker-types";
 import { Separator } from "../ui/separator";
@@ -101,69 +101,63 @@ export const StartNode: React.FC<NodeProps> = (props) => {
       title="Start"
       icon={<Play className="w-4 h-4" />}
       showHandles={{ top: false, right: false, bottom: true, left: false }}
-      className="!w-[312px] !h-[48px] p-0"
+      className="!w-[312px] p-0 overflow-hidden"
     >
-      {/* Node Actions Menu - Top Right */}
+      {/* Header Bar */}
       {config && (
-        <div className="absolute -top-2 -right-2 z-20 flex items-center gap-1">
-          {/* Configuration Status Indicator */}
-          {isConfigured && !hasError && (
-            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center shadow-md border-2 border-white" title="Configured">
-              <CheckCircle className="w-3 h-3 text-white" />
-            </div>
-          )}
-          {hasError && (
-            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-md border-2 border-white" title="Has errors">
-              <AlertCircle className="w-3 h-3 text-white" />
-            </div>
-          )}
-          
-          {/* Actions Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-6 h-6 bg-white hover:bg-gray-50 border border-gray-300 rounded-full flex items-center justify-center shadow-md transition-colors">
-                <MoreVertical className="w-3.5 h-3.5 text-gray-600" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={handleEdit} className="gap-2 cursor-pointer">
-                <Edit2 className="w-4 h-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDuplicate} className="gap-2 cursor-pointer">
-                <Copy className="w-4 h-4" />
-                Duplicate
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleDelete} className="gap-2 cursor-pointer text-red-600">
-                <Trash2 className="w-4 h-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+          <span className="text-xs text-gray-500 font-mono">{config.nodeType}</span>
+          <div className="flex items-center gap-1.5">
+            <button className="w-5 h-5 flex items-center justify-center hover:bg-gray-200 rounded transition-colors">
+              <Play className="w-3 h-3 text-gray-600" />
+            </button>
+            <button className="w-5 h-5 flex items-center justify-center hover:bg-gray-200 rounded transition-colors">
+              <Power className="w-3 h-3 text-gray-600" />
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-5 h-5 flex items-center justify-center hover:bg-gray-200 rounded transition-colors">
+                  <MoreVertical className="w-3 h-3 text-gray-600" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={handleEdit} className="gap-2 cursor-pointer">
+                  <Edit2 className="w-4 h-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDuplicate} className="gap-2 cursor-pointer">
+                  <Copy className="w-4 h-4" />
+                  Duplicate
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleDelete} className="gap-2 cursor-pointer text-red-600">
+                  <Trash2 className="w-4 h-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       )}
 
-      <div className="px-3 h-full flex items-center justify-between gap-3">
+      {/* Main Card Content */}
+      <div className="px-3 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
             {config ? (
-              <EventIconRenderer iconType={config.nodeType} className="w-5 h-5" />
+              <EventIconRenderer iconType={config.nodeType} className="w-6 h-6 text-blue-600" />
             ) : labelIcon && (
-              <Play className="w-5 h-5 text-blue-600" />
+              <Play className="w-6 h-6 text-blue-600" />
             )}
           </div>
           <div className="flex flex-col gap-0 flex-1 min-w-0">
             {config ? (
               <>
-                <h3 className="font-medium text-sm text-gray-900 truncate leading-tight">
+                <h3 className="font-semibold text-sm text-gray-900 truncate leading-tight">
                   {config.nodeSubtitle || config.nodeName}
                 </h3>
-                <p className="text-[10px] text-gray-400 leading-tight font-mono">
-                  {config.nodeType}
-                </p>
                 {filterCount > 0 && (
-                  <p className="text-[11px] text-gray-500 leading-tight">
+                  <p className="text-xs text-gray-500 leading-tight">
                     {filterCount} {filterCount === 1 ? 'filter' : 'filters'} selected
                   </p>
                 )}
@@ -174,17 +168,10 @@ export const StartNode: React.FC<NodeProps> = (props) => {
           </div>
         </div>
         {config && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span className="px-2 py-0.5 bg-gray-900 text-white text-[11px] font-medium rounded flex items-center gap-1">
-              <Play className="w-2.5 h-2.5" />
-              Trigger
-            </span>
-            {hasError && (
-              <div className="w-5 h-5 bg-red-500 rounded flex items-center justify-center">
-                <AlertCircle className="w-3 h-3 text-white" />
-              </div>
-            )}
-          </div>
+          <button className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-1.5 flex-shrink-0 transition-colors">
+            <Zap className="w-3.5 h-3.5 text-gray-700" />
+            <span className="text-xs font-medium text-gray-700">Trigger</span>
+          </button>
         )}
       </div>
       

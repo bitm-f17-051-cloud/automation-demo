@@ -45,6 +45,24 @@ const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
   const [headers, setHeaders] = useState<KeyValuePair[]>(
     nodeData?.nodeData?.headers || []
   );
+  // Authentication state
+  const [authType, setAuthType] = useState<"none" | "basic_auth" | "header_auth">(
+    nodeData?.nodeData?.authType || "none"
+  );
+  // Basic Auth fields
+  const [basicAuthUsername, setBasicAuthUsername] = useState<string>(
+    nodeData?.nodeData?.basicAuthUsername || ""
+  );
+  const [basicAuthPassword, setBasicAuthPassword] = useState<string>(
+    nodeData?.nodeData?.basicAuthPassword || ""
+  );
+  // Header Auth fields
+  const [headerAuthName, setHeaderAuthName] = useState<string>(
+    nodeData?.nodeData?.headerAuthName || ""
+  );
+  const [headerAuthValue, setHeaderAuthValue] = useState<string>(
+    nodeData?.nodeData?.headerAuthValue || ""
+  );
 
   const addCustomData = () => {
     setCustomData([...customData, { id: uuidv4(), key: "", value: "" }]);
@@ -93,12 +111,21 @@ const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
       nodeData: {
         method,
         url,
+        authType,
+        basicAuthUsername: authType === "basic_auth" ? basicAuthUsername : undefined,
+        basicAuthPassword: authType === "basic_auth" ? basicAuthPassword : undefined,
+        headerAuthName: authType === "header_auth" ? headerAuthName : undefined,
+        headerAuthValue: authType === "header_auth" ? headerAuthValue : undefined,
         customData: customData.filter((item) => item.key),
         headers: headers.filter((item) => item.key),
       },
       properties: [
         { key: "Method", value: method },
         { key: "URL", value: url },
+        { 
+          key: "Authentication", 
+          value: authType === "none" ? "None" : authType === "basic_auth" ? "Basic Auth" : "Header Auth" 
+        },
         ...(customData.length > 0
           ? [{ key: "Custom Data", value: `${customData.length} items` }]
           : []),
@@ -185,6 +212,75 @@ const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
             </div>
           </div>
 
+          {/* Authentication */}
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-gray-900 uppercase tracking-wide">
+              Authentication
+            </label>
+            <Select value={authType} onValueChange={(value) => setAuthType(value as "none" | "basic_auth" | "header_auth")}>
+              <SelectTrigger className="w-full h-12 text-base">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="basic_auth">Basic Auth</SelectItem>
+                <SelectItem value="header_auth">Header Auth</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Basic Auth Configuration */}
+            {authType === "basic_auth" && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Username</label>
+                  <Input
+                    value={basicAuthUsername}
+                    onChange={(e) => setBasicAuthUsername(e.target.value)}
+                    className="h-10 text-sm"
+                    placeholder="Enter username"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Password</label>
+                  <Input
+                    type="password"
+                    value={basicAuthPassword}
+                    onChange={(e) => setBasicAuthPassword(e.target.value)}
+                    className="h-10 text-sm"
+                    placeholder="Enter password"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Header Auth Configuration */}
+            {authType === "header_auth" && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Header Name</label>
+                  <Input
+                    value={headerAuthName}
+                    onChange={(e) => setHeaderAuthName(e.target.value)}
+                    className="h-10 text-sm"
+                    placeholder="e.g., X-API-Key"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Header Value</label>
+                  <Input
+                    type="password"
+                    value={headerAuthValue}
+                    onChange={(e) => setHeaderAuthValue(e.target.value)}
+                    className="h-10 text-sm"
+                    placeholder="Enter header value"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
           {/* Custom Data */}
           <div className="space-y-3">
             <div>
@@ -210,10 +306,10 @@ const InboundWebhookAction = ({ goBack, nodeData }: Props) => {
                       onChange={(e) => updateCustomData(item.id, "key", e.target.value)}
                       className="h-10 text-sm"
                     />
-                    <Input
+                    <DynamicInput
                       placeholder="Value"
                       value={item.value}
-                      onChange={(e) => updateCustomData(item.id, "value", e.target.value)}
+                      onChange={(value) => updateCustomData(item.id, "value", value)}
                       className="h-10 text-sm"
                     />
                   </div>

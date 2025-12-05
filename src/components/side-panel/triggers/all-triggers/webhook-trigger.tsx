@@ -75,6 +75,30 @@ const WebhookTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
   // Dummy webhook URL
   const webhookUrl = "https://api.iclosed.com/webhook/abc123xyz";
 
+  // Authentication state
+  const [authType, setAuthType] = useState<"none" | "basic_auth" | "header_auth">(
+    nodeData?.nodeData?.authType || "none"
+  );
+  // Basic Auth fields
+  const [basicAuthUsername, setBasicAuthUsername] = useState<string>(
+    nodeData?.nodeData?.basicAuthUsername || ""
+  );
+  const [basicAuthPassword, setBasicAuthPassword] = useState<string>(
+    nodeData?.nodeData?.basicAuthPassword || ""
+  );
+  // Header Auth fields
+  const [headerAuthName, setHeaderAuthName] = useState<string>(
+    nodeData?.nodeData?.headerAuthName || ""
+  );
+  const [headerAuthValue, setHeaderAuthValue] = useState<string>(
+    nodeData?.nodeData?.headerAuthValue || ""
+  );
+  // Sample payload state
+  const [samplePayload, setSamplePayload] = useState<string>(
+    nodeData?.nodeData?.samplePayload || ""
+  );
+  const [payloadError, setPayloadError] = useState<string>("");
+
   // Filter state
   type FilterRow = { 
     id: string; 
@@ -124,8 +148,34 @@ const WebhookTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
     navigator.clipboard.writeText(webhookUrl);
   };
 
+  // Validate JSON payload
+  const validateJSON = (jsonString: string): boolean => {
+    if (!jsonString.trim()) {
+      setPayloadError("");
+      return true;
+    }
+    try {
+      JSON.parse(jsonString);
+      setPayloadError("");
+      return true;
+    } catch (error) {
+      setPayloadError("Invalid JSON format");
+      return false;
+    }
+  };
+
+  const handlePayloadChange = (value: string) => {
+    setSamplePayload(value);
+    validateJSON(value);
+  };
+
   const saveAction = () => {
     if (!selectedNodeId) return;
+    
+    // Validate sample payload before saving
+    if (samplePayload.trim() && !validateJSON(samplePayload)) {
+      return; // Don't save if JSON is invalid
+    }
     
     const properties: Array<{ key: string; value: any }> = [];
     
@@ -149,6 +199,24 @@ const WebhookTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
       }
     });
     
+    // Add Authentication property
+    const authDisplayValue = 
+      authType === "none" ? "None" :
+      authType === "basic_auth" ? "Basic Auth" :
+      "Header Auth";
+    properties.push({ 
+      key: "Authentication", 
+      value: authDisplayValue
+    });
+    
+    // Add Sample Payload property if exists
+    if (samplePayload.trim()) {
+      properties.push({ 
+        key: "Sample Payload", 
+        value: "Configured"
+      });
+    }
+    
     const config = {
       nodeType: selectedTrigger,
       nodeName: triggerName || triggerMeta?.label,
@@ -157,6 +225,12 @@ const WebhookTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
       nodeData: {
         webhookUrl,
         filters: filters,
+        authType,
+        basicAuthUsername: authType === "basic_auth" ? basicAuthUsername : undefined,
+        basicAuthPassword: authType === "basic_auth" ? basicAuthPassword : undefined,
+        headerAuthName: authType === "header_auth" ? headerAuthName : undefined,
+        headerAuthValue: authType === "header_auth" ? headerAuthValue : undefined,
+        samplePayload: samplePayload.trim() || undefined,
       },
       properties,
     };
@@ -206,6 +280,101 @@ const WebhookTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
             </button>
           </div>
           <p className="text-xs text-gray-500">This URL is read-only. Use it to send webhook events to this workflow.</p>
+        </div>
+
+        <Separator className="bg-gray-200" />
+
+        {/* Authentication */}
+        <div className="space-y-3">
+          <label className="block text-sm font-semibold text-gray-900 uppercase tracking-wide">
+            Authentication
+          </label>
+          <Select value={authType} onValueChange={(value) => setAuthType(value as "none" | "basic_auth" | "header_auth")}>
+            <SelectTrigger className="w-full h-12 text-base">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="basic_auth">Basic Auth</SelectItem>
+              <SelectItem value="header_auth">Header Auth</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Basic Auth Configuration */}
+          {authType === "basic_auth" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Username</label>
+                <Input
+                  value={basicAuthUsername}
+                  onChange={(e) => setBasicAuthUsername(e.target.value)}
+                  className="h-10 text-sm"
+                  placeholder="Enter username"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Password</label>
+                <Input
+                  type="password"
+                  value={basicAuthPassword}
+                  onChange={(e) => setBasicAuthPassword(e.target.value)}
+                  className="h-10 text-sm"
+                  placeholder="Enter password"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Header Auth Configuration */}
+          {authType === "header_auth" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Header Name</label>
+                <Input
+                  value={headerAuthName}
+                  onChange={(e) => setHeaderAuthName(e.target.value)}
+                  className="h-10 text-sm"
+                  placeholder="e.g., X-API-Key"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Header Value</label>
+                <Input
+                  type="password"
+                  value={headerAuthValue}
+                  onChange={(e) => setHeaderAuthValue(e.target.value)}
+                  className="h-10 text-sm"
+                  placeholder="Enter header value"
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Separator className="bg-gray-200" />
+
+        {/* Sample Payload */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700">
+            Sample Payload
+          </label>
+          <div className="space-y-1">
+            <textarea
+              value={samplePayload}
+              onChange={(e) => handlePayloadChange(e.target.value)}
+              placeholder='{"example": "payload", "data": "here"}'
+              className={`w-full px-3 py-2 text-sm border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono ${
+                payloadError ? "border-red-300 focus:ring-red-500" : "border-gray-300"
+              }`}
+              rows={8}
+            />
+            {payloadError && (
+              <p className="text-xs text-red-600">{payloadError}</p>
+            )}
+            <p className="text-xs text-gray-500">
+              Enter a sample JSON payload to test your webhook trigger
+            </p>
+          </div>
         </div>
 
         <Separator className="bg-gray-200" />
