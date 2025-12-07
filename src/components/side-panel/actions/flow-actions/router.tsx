@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Plus, Trash2, Split, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Share2, GripVertical } from "lucide-react";
 import { useState } from "react";
 import { useWorkflowStore } from "@/store/workflow.store";
 
@@ -192,7 +192,7 @@ const RouterAction = ({ goBack, nodeData, selectedAction }: RouterActionProps) =
           </button>
           <div className="flex items-center gap-3 flex-1">
             <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
-              <Split className="w-5 h-5 text-green-600" />
+              <Share2 className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Router</h2>

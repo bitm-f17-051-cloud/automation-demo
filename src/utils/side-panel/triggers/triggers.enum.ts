@@ -12,7 +12,6 @@ export enum TriggersEnum {
   SCHEDULER_WATCH_CALL_BOOKED = "scheduler_watch_call_booked",
   SCHEDULER_WATCH_CALL_OUTCOME = "scheduler_watch_call_outcome",
   SCHEDULER_WATCH_CANCELLED_CALL = "scheduler_watch_cancelled_call",
-  SCHEDULER_WATCH_CONTACT_BY_STATUS = "scheduler_watch_contact_by_status",
   SCHEDULER_WATCH_SETTER_OWNER_ASSIGNED = "scheduler_watch_setter_owner_assigned",
   // Integration
   WEBHOOK_TRIGGER = "webhook_trigger",

@@ -8,7 +8,9 @@ import {
 import { 
   GitBranch, 
   Clock, 
-  Split
+  Split,
+  Filter,
+  Share2
 } from 'lucide-react';
 
 // Call-related actions
@@ -79,6 +81,13 @@ export const CONTACT_ACTIONS = {
     icon: AddUpdateFieldsIcon,
     category: 'CONTACT',
     description: 'Updates the setter owner of contact in iClosed.'
+  },
+  UPDATE_CONTACT_STAGE: {
+    value: 'crm_update_contact_stage',
+    label: 'Update Contact Stage',
+    icon: AddUpdateFieldsIcon,
+    category: 'CONTACT',
+    description: 'Action to update the contact stage in iClosed.'
   }
 } as const;
 
@@ -159,22 +168,36 @@ export const FLOW_ACTIONS = {
     value: 'flow_if_else',
     label: 'If / Else',
     icon: GitBranch,
-    category: 'FLOW',
+    category: 'DECISION',
     description: 'Create conditional if/else logic'
   },
   WAIT: {
     value: 'flow_wait',
     label: 'Wait',
     icon: Clock,
-    category: 'FLOW',
+    category: 'DECISION',
     description: 'Pause workflow execution'
   },
   ROUTER: {
     value: 'flow_router',
     label: 'Router',
-    icon: Split,
-    category: 'FLOW',
+    icon: Share2,
+    category: 'DECISION',
     description: 'Route to different workflow paths'
+  },
+  FILTER: {
+    value: 'flow_filter',
+    label: 'Filter',
+    icon: Filter,
+    category: 'DECISION',
+    description: 'Filter workflow data'
+  },
+  SPLIT: {
+    value: 'flow_split',
+    label: 'Split',
+    icon: Split,
+    category: 'DECISION',
+    description: 'Distribute workflow across multiple paths'
   }
 } as const;
 

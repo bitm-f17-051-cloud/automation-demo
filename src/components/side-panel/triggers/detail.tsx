@@ -26,7 +26,6 @@ const CUSTOM_TRIGGERS: Record<string, any> = {
   [TriggersEnum.INBOUND_CUSTOM_CONTACT_FIELD_UPDATED]: ContactCustomFieldTrigger,
   [TriggersEnum.SCHEDULER_WATCH_APPOINTMENT_SETTING_OUTCOME]: AppointmentSettingTrigger,
   [TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME]: GenericInboundSchedulerTrigger,
-  [TriggersEnum.SCHEDULER_WATCH_CONTACT_BY_STATUS]: GenericInboundSchedulerTrigger,
   [TriggersEnum.INBOUND_WATCH_NOTE]: SimpleTrigger,
   [TriggersEnum.INBOUND_WATCH_TRANSACTION_SYNCED]: SimpleTrigger,
   [TriggersEnum.SCHEDULER_WATCH_SETTER_OWNER_ASSIGNED]: SimpleTrigger,

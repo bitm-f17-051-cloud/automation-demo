@@ -9,6 +9,8 @@ import UpdateFieldsAction from "./all-actions/update-fields";
 import IfElseAction from "./flow-actions/if-else";
 import WaitAction from "./flow-actions/wait";
 import RouterAction from "./flow-actions/router";
+import FilterAction from "./flow-actions/filter";
+import SplitAction from "./flow-actions/split";
 
 // Integrations Actions
 import InboundWebhookAction from "./flow-actions/inbound-webhook";
@@ -22,6 +24,7 @@ import CreateContactNoteAction from "./crm-actions/create-contact-note";
 import CreateTransactionAction from "./crm-actions/create-transaction";
 import UpdateContactAction from "./crm-actions/update-contact";
 import UpdateContactCustomFieldAction from "./crm-actions/update-contact-custom-field";
+import UpdateContactStageAction from "./crm-actions/update-contact-stage";
 import UpdateSetterOwnerAction from "./crm-actions/update-setter-owner";
 
 // Search Actions
@@ -53,6 +56,9 @@ const ACTIONS_COMPONENTS = {
   'flow_wait': WaitAction,
   'flow_router': RouterAction,
   'flow_router_path': RouterAction,
+  'flow_split': SplitAction,
+  'flow_split_path': SplitAction,
+  'flow_filter': FilterAction,
   'flow_inbound_webhook': InboundWebhookAction,
   // CRM Actions
   'crm_add_call_outcome': AddCallOutcomeAction,
@@ -63,6 +69,7 @@ const ACTIONS_COMPONENTS = {
   'crm_create_transaction': CreateTransactionAction,
   'crm_update_contact': UpdateContactAction,
   'crm_update_contact_custom_field': UpdateContactCustomFieldAction,
+  'crm_update_contact_stage': UpdateContactStageAction,
   'crm_update_setter_owner': UpdateSetterOwnerAction,
   // Search Actions
   'search_call': SearchCallAction,

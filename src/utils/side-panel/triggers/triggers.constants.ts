@@ -9,7 +9,7 @@ import {
 export const CONTACT_TRIGGERS = {
   WATCH_NEW_CONTACTS: {
     value: 'inbound_watch_new_contacts',
-    label: 'New Contact Created',
+    label: 'Contact Created',
     icon: ContactCreatedIcon,
     category: 'Contact',
     description: 'Triggers when a new contact is created in iClosed.'
@@ -54,7 +54,7 @@ export const SCHEDULER_TRIGGERS = {
   },
   WATCH_CALL_BOOKED: {
     value: 'scheduler_watch_call_booked',
-    label: 'Call Created',
+    label: 'Call Booked',
     icon: PhoneIcon,
     category: 'Scheduler',
     description: 'Triggers when a new call is scheduled.'
@@ -72,13 +72,6 @@ export const SCHEDULER_TRIGGERS = {
     icon: PhoneIcon,
     category: 'Scheduler',
     description: 'Triggers when a call is cancelled.'
-  },
-  WATCH_CONTACT_BY_STATUS: {
-    value: 'scheduler_watch_contact_by_status',
-    label: 'Contact by Status',
-    icon: ContactCreatedIcon,
-    category: 'Scheduler',
-    description: "Triggers when contact status is changed on a scheduler's journey."
   },
   WATCH_RESCHEDULED_CALL: {
     value: 'scheduler_watch_rescheduled_call',
@@ -99,7 +92,7 @@ export const SCHEDULER_TRIGGERS = {
 export const INTEGRATION_TRIGGERS = {
   WEBHOOK_TRIGGER: {
     value: 'webhook_trigger',
-    label: 'Webhook Trigger',
+    label: 'Inbound Webhook',
     icon: WebhookIcon,
     category: 'Integration',
     description: 'Triggered by webhook events'

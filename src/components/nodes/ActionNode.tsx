@@ -167,9 +167,15 @@ export const ActionNode: React.FC<NodeProps> = (props) => {
                 <h3 className="font-medium text-sm text-gray-900 truncate">
                   {config.nodeName}
                 </h3>
-                <p className="text-[10px] text-gray-400 leading-tight font-mono">
-                  {config.nodeType}
-                </p>
+                {config.nodeType === 'wait' && config.nodeDescription ? (
+                  <p className="text-[11px] text-gray-500 leading-tight truncate">
+                    {config.nodeDescription}
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-gray-400 leading-tight font-mono">
+                    {config.nodeType}
+                  </p>
+                )}
               </div>
             </div>
           </>

@@ -256,6 +256,11 @@ export interface WorkflowState {
     nodeId: string,
     numberOfRoutes?: number
   ) => void;
+  addEmptyActionNodesForSplit: (
+    nodeId: string,
+    numberOfPaths?: number,
+    paths?: Array<{ id: string; name: string; percentage: number }>
+  ) => void;
   deleteNode: (nodeId: string) => void;
   addEdge: (edge: WorkflowEdge) => void;
   updateEdge: (edgeId: string, updates: Partial<WorkflowEdge>) => void;
@@ -372,7 +377,7 @@ export const useWorkflowStore = create<WorkflowState>()(
                 }
 
                 const isConditionalBranching =
-                  config?.nodeName === "If/Else" || config?.nodeName === "Router";
+                  config?.nodeName === "If/Else" || config?.nodeName === "Router" || config?.nodeName === "Split";
 
                 return {
                   ...node,
@@ -408,6 +413,10 @@ export const useWorkflowStore = create<WorkflowState>()(
           } else if (config?.nodeName === "Router") {
             // For routers, directly create action nodes without condition nodes
             get().addEmptyActionNodesForRouter(nodeId, noOfBranches);
+          } else if (config?.nodeName === "Split") {
+            // For splits, create path nodes (condition nodes) with percentages, then action nodes
+            const paths = config?.paths || [];
+            get().addEmptyActionNodesForSplit(nodeId, paths.length, paths);
           } else {
             get().addEmptyActionNode(nodeId);
           }
@@ -436,9 +445,11 @@ export const useWorkflowStore = create<WorkflowState>()(
               JSON.stringify(state.edges)
             );
 
-            // Check if this is a router node
+            // Check if this is a router or split node
             const node = tempNodes.find((n) => n.id === nodeId);
             const isRouter = node?.data?.config?.nodeType === "flow_router" || node?.data?.config?.nodeName === "Router";
+            const isSplit = node?.data?.config?.nodeType === "flow_split" || node?.data?.config?.nodeName === "Split";
+            const isRouterOrSplit = isRouter || isSplit;
 
             const updatedNodes = tempNodes.map((node) =>
               node.id === nodeId
@@ -455,7 +466,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             const nodesToDelete = new Set<string>();
             const edgesToDelete = new Set<string>();
 
-            // For routers, find action nodes to delete; for if/else, find condition nodes
+            // For routers, find action nodes to delete; for splits/if-else, find condition nodes
             const nodesToDeleteList = isRouter
               ? updatedNodes.filter(
                   (node) =>
@@ -465,8 +476,9 @@ export const useWorkflowStore = create<WorkflowState>()(
                 )
               : updatedNodes.filter(
                   (node) =>
-                    branchesToDelete.includes(node.data.label) &&
-                    node.type === "condition"
+                    branchesToDelete.includes(node.data.label || node.data.config?.nodeName) &&
+                    node.type === "condition" &&
+                    tempEdges.some((edge) => edge.source === nodeId && edge.target === node.id)
                 );
 
             // For each node to delete, find all connected nodes in the branch
@@ -585,6 +597,129 @@ export const useWorkflowStore = create<WorkflowState>()(
                     newEdges.push({
                       id: `${newActionNode.id}-${endNode.id}`,
                       source: newActionNode.id,
+                      target: endNode.id,
+                      sourceHandle: "output",
+                      targetHandle: "input",
+                    });
+                  }
+                }
+              }
+
+              return {
+                nodes: [...updatedNodes, ...newNodes],
+                edges: [...tempEdges, ...newEdges],
+              };
+            }
+
+            // For splits, create path nodes (condition nodes) with percentages, then action nodes
+            if (isSplit) {
+              const splitNode = updatedNodes.find((n) => n.id === nodeId);
+              if (!splitNode) {
+                return { nodes: updatedNodes, edges: tempEdges };
+              }
+
+              // Get paths from config
+              const paths = splitNode.data?.config?.paths || [];
+              
+              // Find existing path nodes connected to split
+              const existingPathNodeIds = tempEdges
+                .filter((edge) => edge.source === nodeId)
+                .map((edge) => edge.target);
+              const pathNodes = updatedNodes.filter((node) =>
+                existingPathNodeIds.includes(node.id) && node.type === "condition"
+              );
+
+              const totalWidth = (branches.length - 1) * CONDITION_NODE_SPACING;
+              const startX = DEFAULT_NODE_X_POSITION - totalWidth / 2;
+              const baseY = splitNode.position.y + (splitNode.measured?.height ?? 48) + DEFAULT_NODES_SPACING;
+
+              const newNodes = [];
+              const newEdges = [];
+
+              for (const [index, branch] of branches.entries()) {
+                if (branch) {
+                  const pathNode = pathNodes[index];
+                  const path = paths[index] || { id: uuidv4(), name: branch.nodeName || `Path ${String.fromCharCode(65 + index)}`, percentage: 0 };
+                  
+                  if (!pathNode) {
+                    // Create path node (condition node)
+                    const newPathNode = {
+                      ...EMPTY_CONDITION_NODE,
+                      id: uuidv4(),
+                      position: {
+                        x:
+                          startX +
+                          index * CONDITION_NODE_SPACING -
+                          CONDITION_NODE_WIDTH / 2,
+                        y: baseY,
+                      },
+                      data: {
+                        ...EMPTY_CONDITION_NODE.data,
+                        label: path.name,
+                        config: {
+                          nodeName: path.name,
+                          nodeType: "flow_split_path",
+                          nodeIcon: "flow_split",
+                          pathId: path.id,
+                          percentage: path.percentage,
+                          properties: [
+                            { key: "pathId", value: path.id },
+                            { key: "percentage", value: `${path.percentage}%` }
+                          ],
+                        },
+                      },
+                    };
+
+                    // Create action node for this path
+                    const actionNode = {
+                      ...EMPTY_ACTION_NODE,
+                      id: uuidv4(),
+                      position: {
+                        x:
+                          newPathNode.position.x +
+                          CONDITION_NODE_WIDTH / 2 -
+                          DEFAULT_ACTION_NODE_WIDTH / 2,
+                        y: baseY + 48 + DEFAULT_NODES_SPACING,
+                      },
+                    };
+
+                    // Create end node for this path
+                    const endNode = {
+                      ...EMPTY_END_NODE,
+                      id: uuidv4(),
+                      position: {
+                        x:
+                          newPathNode.position.x +
+                          CONDITION_NODE_WIDTH / 2 -
+                          EMPTY_END_NODE.measured!.width / 2,
+                        y: baseY + 48 + DEFAULT_NODES_SPACING * 2 + 48,
+                      },
+                    };
+
+                    newNodes.push(newPathNode, actionNode, endNode);
+
+                    // Connect split to path node
+                    newEdges.push({
+                      id: `${nodeId}-${newPathNode.id}`,
+                      source: nodeId,
+                      target: newPathNode.id,
+                      sourceHandle: "output",
+                      targetHandle: "input",
+                    });
+
+                    // Connect path node to action node
+                    newEdges.push({
+                      id: `${newPathNode.id}-${actionNode.id}`,
+                      source: newPathNode.id,
+                      target: actionNode.id,
+                      sourceHandle: "output",
+                      targetHandle: "input",
+                    });
+
+                    // Connect action node to end node
+                    newEdges.push({
+                      id: `${actionNode.id}-${endNode.id}`,
+                      source: actionNode.id,
                       target: endNode.id,
                       sourceHandle: "output",
                       targetHandle: "input",
@@ -1177,6 +1312,171 @@ export const useWorkflowStore = create<WorkflowState>()(
           },
           false,
           "addEmptyActionNodesForRouter"
+        );
+      },
+
+      addEmptyActionNodesForSplit: (
+        nodeId,
+        numberOfPaths = 2,
+        paths = []
+      ) => {
+        // Don't track empty node additions in history as they're automatic
+        return set(
+          (state) => {
+            const updatedNodes = JSON.parse(JSON.stringify(state.nodes));
+            const updatedEdges = JSON.parse(JSON.stringify(state.edges));
+
+            // Find the split node
+            const splitNodeIndex = updatedNodes.findIndex(
+              (node: WorkflowNode) => node.id === nodeId
+            );
+            const splitNode = updatedNodes[splitNodeIndex];
+            
+            if (!splitNode) return { nodes: updatedNodes, edges: updatedEdges };
+
+            // Find the target node if there's an outgoing edge
+            const outgoingEdge = updatedEdges.find(
+              (edge: WorkflowEdge) => edge.source === nodeId
+            );
+            
+            let endNodeIndex = -1;
+            let endEdgeIndex = -1;
+            
+            if (outgoingEdge) {
+              endNodeIndex = updatedNodes.findIndex(
+                (node: WorkflowNode) => node.id === outgoingEdge.target
+              );
+              endEdgeIndex = updatedEdges.findIndex(
+                (edge: WorkflowEdge) => edge.source === nodeId
+              );
+            }
+
+            let previousNodeHeight = splitNode.measured?.height ?? 48;
+
+            const baseY =
+              splitNode.position.y +
+              previousNodeHeight +
+              DEFAULT_NODES_SPACING;
+
+            // Calculate total width needed for all path nodes
+            const totalWidth =
+              (numberOfPaths - 1) * CONDITION_NODE_SPACING;
+            const startX = DEFAULT_NODE_X_POSITION - totalWidth / 2;
+
+            const newNodes = [];
+            const newEdges = [];
+
+            // Create path nodes (condition nodes) with percentages, then action nodes after them
+            for (let i = 0; i < numberOfPaths; i++) {
+              const path = paths[i] || { id: uuidv4(), name: `Path ${String.fromCharCode(65 + i)}`, percentage: 0 };
+              
+              // Create path node (condition node)
+              const pathNode = {
+                ...EMPTY_CONDITION_NODE,
+                id: uuidv4(),
+                position: {
+                  x:
+                    startX +
+                    i * CONDITION_NODE_SPACING -
+                    CONDITION_NODE_WIDTH / 2,
+                  y: baseY,
+                },
+                data: {
+                  ...EMPTY_CONDITION_NODE.data,
+                  label: path.name,
+                  config: {
+                    nodeName: path.name,
+                    nodeType: "flow_split_path",
+                    nodeIcon: "flow_split",
+                    pathId: path.id,
+                    percentage: path.percentage,
+                    properties: [
+                      { key: "pathId", value: path.id },
+                      { key: "percentage", value: `${path.percentage}%` }
+                    ],
+                  },
+                },
+              };
+
+              // Create an action node for this path
+              const actionNode = {
+                ...EMPTY_ACTION_NODE,
+                id: uuidv4(),
+                position: {
+                  x:
+                    pathNode.position.x +
+                    CONDITION_NODE_WIDTH / 2 -
+                    DEFAULT_ACTION_NODE_WIDTH / 2,
+                  y: baseY + 48 + DEFAULT_NODES_SPACING,
+                },
+              };
+
+              // Create an end node for this path
+              const endNode = {
+                ...EMPTY_END_NODE,
+                id: uuidv4(),
+                position: {
+                  x:
+                    pathNode.position.x +
+                    CONDITION_NODE_WIDTH / 2 -
+                    EMPTY_END_NODE.measured!.width / 2,
+                  y: baseY + 48 + DEFAULT_NODES_SPACING * 2 + 48,
+                },
+              };
+
+              newNodes.push(pathNode, actionNode, endNode);
+
+              // Connect split node to path node
+              newEdges.push({
+                id: `${nodeId}-${pathNode.id}`,
+                source: nodeId,
+                target: pathNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              });
+
+              // Connect path node to action node
+              newEdges.push({
+                id: `${pathNode.id}-${actionNode.id}`,
+                source: pathNode.id,
+                target: actionNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              });
+
+              // Connect action node to end node
+              newEdges.push({
+                id: `${actionNode.id}-${endNode.id}`,
+                source: actionNode.id,
+                target: endNode.id,
+                sourceHandle: "output",
+                targetHandle: "input",
+              });
+            }
+
+            // Remove the original end node and edge if they exist
+            if (endNodeIndex >= 0) {
+              updatedNodes.splice(endNodeIndex, 1);
+            }
+            if (endEdgeIndex >= 0) {
+              updatedEdges.splice(endEdgeIndex, 1);
+            }
+
+            // Insert all new nodes
+            if (endNodeIndex >= 0) {
+              updatedNodes.splice(endNodeIndex, 0, ...newNodes);
+            } else {
+              // If no end node, just add the new nodes at the end
+              updatedNodes.push(...newNodes);
+            }
+
+            return {
+              nodes: updatedNodes,
+              edges: [...updatedEdges, ...newEdges],
+            };
+          },
+          false,
+          "addEmptyActionNodesForSplit"
         );
       },
 

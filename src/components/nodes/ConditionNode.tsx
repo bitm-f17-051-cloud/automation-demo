@@ -78,7 +78,9 @@ export const ConditionNode: React.FC<NodeProps> = (props) => {
   // Get branch type and segment info for If/Else branches
   const branchType = config?.branchType;
   const routeId = config?.routeId; // For Router paths
+  const pathId = config?.pathId; // For Split paths
   const isRouterPath = config?.nodeType === "flow_router_path" || !!routeId;
+  const isSplitPath = config?.nodeType === "flow_split_path" || !!pathId;
   const segments = Array.isArray(config?.segments) ? config.segments : [];
   const segmentCount = segments.length;
   const filterCount = segments.reduce((sum: number, seg: any) => {
@@ -178,6 +180,23 @@ export const ConditionNode: React.FC<NodeProps> = (props) => {
                     <h3 className="font-medium text-sm text-gray-900 truncate">
                       {config.nodeName}
                     </h3>
+                  </div>
+                </>
+              ) : isSplitPath ? (
+                // Split path display
+                <>
+                  <div className="px-2 py-1 rounded-md bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm flex-shrink-0">
+                    <span className="text-[11px] font-semibold text-white tracking-wide">
+                      Path
+                    </span>
+                  </div>
+                  <div className="flex flex-col flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-gray-900 truncate">
+                      {config.nodeName}
+                    </h3>
+                    <p className="text-[11px] text-gray-600 font-medium">
+                      {config.percentage !== undefined ? `${config.percentage}%` : config.properties?.find((p: any) => p.key === "percentage")?.value || "0%"}
+                    </p>
                   </div>
                 </>
               ) : branchType ? (

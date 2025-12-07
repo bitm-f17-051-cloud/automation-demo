@@ -92,9 +92,6 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
     Added: false,
     Updated: false,
   });
-  const [finalStatus, setFinalStatus] = useState<string>("");
-  const [waitSeconds, setWaitSeconds] = useState<number>(0);
-  const [sendLastActiveStatus, setSendLastActiveStatus] = useState<"Yes" | "No" | undefined>(undefined);
 
   // Filter state
   type FilterRow = { 
@@ -149,9 +146,6 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
       setOutcomes(nd.outcomes || outcomes);
       setEventTypes(nd.eventTypes || eventTypes);
       setTriggerOutcomeFlags(nd.triggerOutcomeFlags || triggerOutcomeFlags);
-      setFinalStatus(nd.finalStatus || "");
-      setWaitSeconds(nd.waitSeconds || 0);
-      setSendLastActiveStatus(nd.sendLastActiveStatus || undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId, nodeData]);
@@ -165,20 +159,16 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
     selectedTrigger === TriggersEnum.INBOUND_CUSTOM_CONTACT_FIELD_UPDATED;
   const showOutcomeFlags = selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME;
   const showFilters = 
-    selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME ||
-    selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CONTACT_BY_STATUS;
-  const showContactByStatus =
-    selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CONTACT_BY_STATUS;
+    selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME;
 
   const isSaveDisabled = useMemo(() => {
     // very light validation to enable save
     if (showCustomField && !customFieldSearch.trim()) return true;
-    if (showContactByStatus && (!finalStatus || !sendLastActiveStatus)) return true;
     if (showEventType && !Object.values(eventTypes).some(v => v)) return true;
     if (showOutcomes && !Object.values(outcomes).some(v => v)) return true;
     if (showOutcomeFlags && !Object.values(triggerOutcomeFlags).some(v => v)) return true;
     return false;
-  }, [showCustomField, customFieldSearch, showContactByStatus, finalStatus, sendLastActiveStatus, showEventType, eventTypes, showOutcomes, outcomes, showOutcomeFlags, triggerOutcomeFlags]);
+  }, [showCustomField, customFieldSearch, showEventType, eventTypes, showOutcomes, outcomes, showOutcomeFlags, triggerOutcomeFlags]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -227,15 +217,6 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
       });
     }
     
-    // Add contact by status
-    if (showContactByStatus) {
-      properties.push(
-        { key: "final_status", value: finalStatus },
-        { key: "wait_seconds", value: waitSeconds },
-        { key: "send_last_active_status", value: sendLastActiveStatus }
-      );
-    }
-    
     const config = {
       nodeType: selectedTrigger,
       nodeName: triggerName || triggerMeta?.label,
@@ -246,9 +227,6 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
         outcomes,
         eventTypes,
         triggerOutcomeFlags,
-        finalStatus,
-        waitSeconds,
-        sendLastActiveStatus,
         ...(showFilters ? { filters: rows.filter(r => r.type).map(r => ({
           type: r.type,
           textValue: r.textValue || "",
@@ -445,50 +423,6 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
             <p className="text-sm text-gray-500">
               Trigger when an outcome is added to a new call or existing outcome of the call is updated.
             </p>
-          </div>
-        )}
-
-        {showContactByStatus && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-900">Final Status <span className="text-red-500">*</span></h4>
-              <Select value={finalStatus} onValueChange={setFinalStatus}>
-                <SelectTrigger className="w-full h-11 bg-white border-gray-300">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Potential - Primary">Potential - Primary</SelectItem>
-                  <SelectItem value="Potential - Phone AND Email">Potential - Phone AND Email</SelectItem>
-                  <SelectItem value="Qualified">Qualified</SelectItem>
-                  <SelectItem value="Disqualified">Disqualified</SelectItem>
-                  <SelectItem value="Strategy Call Booked">Strategy Call Booked</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-900">Wait for X Seconds</h4>
-              <p className="text-xs text-gray-500">Time for contact to reach final status</p>
-              <Input
-                type="number"
-                placeholder="0"
-                className="w-full h-11"
-                value={Number.isFinite(waitSeconds) ? String(waitSeconds) : ""}
-                onChange={(e) => setWaitSeconds(Number(e.target.value) || 0)}
-              />
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-900">Send Last Active Status? <span className="text-red-500">*</span></h4>
-              <p className="text-xs text-gray-500">Send last active status, if contact left before reaching Final Status</p>
-              <Select value={sendLastActiveStatus || undefined} onValueChange={(value) => setSendLastActiveStatus(value as "Yes" | "No")}>
-                <SelectTrigger className="w-full h-11 bg-white border-gray-300">
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Yes">Yes</SelectItem>
-                  <SelectItem value="No">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         )}
 

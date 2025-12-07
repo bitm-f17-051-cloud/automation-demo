@@ -19,7 +19,7 @@ import {
   SendblueIcon,
   WhatsAppCloudIcon,
 } from '@/components/assets/icons/channels';
-import { Star } from 'lucide-react';
+import { Star, Filter, Split } from 'lucide-react';
 
 export const iconMap = {
   // Triggers
@@ -32,6 +32,8 @@ export const iconMap = {
   send_message: SendMessageIcon,
   wait: WaitIcon,
   update_fields: AddUpdateFieldsIcon,
+  flow_filter: Filter,
+  flow_split: Split,
   
   // Conditionals
   conditional_branching: ConditionIcon,

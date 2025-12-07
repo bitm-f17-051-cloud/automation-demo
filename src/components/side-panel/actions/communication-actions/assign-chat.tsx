@@ -12,8 +12,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, XIcon } from "lucide-react";
+import { ChevronRight, XIcon, RefreshCw, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Dummy team members data
+const DUMMY_TEAM_MEMBERS = [
+  { id: "user_1", name: "Alex Thompson", email: "alex.thompson@example.com" },
+  { id: "user_2", name: "Maria Garcia", email: "maria.garcia@example.com" },
+  { id: "user_3", name: "James Miller", email: "james.miller@example.com" },
+  { id: "user_4", name: "Sophia Martinez", email: "sophia.martinez@example.com" },
+  { id: "user_5", name: "William Taylor", email: "william.taylor@example.com" },
+  { id: "user_6", name: "Olivia Anderson", email: "olivia.anderson@example.com" },
+  { id: "user_7", name: "Michael Jackson", email: "michael.jackson@example.com" },
+  { id: "user_8", name: "Emma White", email: "emma.white@example.com" },
+];
 
 type Props = {
   goBack: () => void;
@@ -25,7 +39,13 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
 
   const [actionName, setActionName] = useState(nodeData?.nodeName || "Assign a chat");
   const [conversationId, setConversationId] = useState(nodeData?.nodeData?.conversationId || "");
+  const [selectionType, setSelectionType] = useState<"round_robin" | "specific_assignee">(
+    nodeData?.nodeData?.selectionType || "specific_assignee"
+  );
   const [assignTo, setAssignTo] = useState(nodeData?.nodeData?.assignTo || "");
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>(
+    nodeData?.nodeData?.selectedAssignees || []
+  );
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -34,14 +54,22 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
       nodeType: "comm_assign_chat",
       nodeName: actionName,
       nodeIcon: "add_update_fields",
-      nodeDescription: `Assign chat ${conversationId} to ${assignTo}`,
+      nodeDescription: selectionType === "round_robin" 
+        ? `Assign chat ${conversationId} (round robin)`
+        : `Assign chat ${conversationId} to ${assignTo}`,
       nodeData: {
         conversationId,
-        assignTo,
+        selectionType,
+        assignTo: selectionType === "specific_assignee" ? assignTo : undefined,
+        selectedAssignees: selectionType === "round_robin" ? selectedAssignees : undefined,
       },
       properties: [
         { key: "Conversation ID", value: conversationId },
-        { key: "Assign To", value: assignTo },
+        { key: "Selection Type", value: selectionType === "round_robin" ? "Round Robin" : "Specific Assignee" },
+        ...(selectionType === "round_robin" 
+          ? [{ key: "Assignees", value: selectedAssignees.join(", ") }]
+          : [{ key: "Assign To", value: assignTo }]
+        ),
       ],
     };
 
@@ -49,7 +77,11 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
     goBack();
   };
 
-  const isValid = conversationId && assignTo;
+  const isValid = conversationId && (
+    selectionType === "round_robin" 
+      ? selectedAssignees.length > 0 
+      : assignTo
+  );
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -97,26 +129,109 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
             />
           </div>
 
-          {/* Assign To */}
+          {/* Selection Type */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Assign To
+              Selection Type
               <span className="text-red-500">*</span>
             </label>
-            <Select value={assignTo} onValueChange={setAssignTo}>
+            <Select value={selectionType} onValueChange={(value) => setSelectionType(value as "round_robin" | "specific_assignee")}>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select team member" />
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="user_1">User 1</SelectItem>
-                <SelectItem value="user_2">User 2</SelectItem>
-                <SelectItem value="user_3">User 3</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.user_id">Previous Action: User ID</SelectItem>
+                <SelectItem value="round_robin">Round Robin</SelectItem>
+                <SelectItem value="specific_assignee">Specific Assignee</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* Assign To */}
+          {selectionType === "round_robin" ? (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                Assignees
+                <span className="text-red-500">*</span>
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-full h-12 flex items-center justify-between px-3 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+                    <span className={selectedAssignees.length === 0 ? "text-gray-500" : ""}>
+                      {selectedAssignees.length > 0
+                        ? `${selectedAssignees.length} assignee${selectedAssignees.length > 1 ? "s" : ""} selected`
+                        : "Select assignees"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-gray-400" />
+                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-full">
+                  <div className="p-2">
+                    <div className="max-h-48 overflow-y-auto">
+                      {DUMMY_TEAM_MEMBERS.map((member) => (
+                        <div
+                          key={member.id}
+                          className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            if (selectedAssignees.includes(member.id)) {
+                              setSelectedAssignees(selectedAssignees.filter(id => id !== member.id));
+                            } else {
+                              setSelectedAssignees([...selectedAssignees, member.id]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            checked={selectedAssignees.includes(member.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedAssignees([...selectedAssignees, member.id]);
+                              } else {
+                                setSelectedAssignees(selectedAssignees.filter(id => id !== member.id));
+                              }
+                            }}
+                          />
+                          <div className="flex items-center gap-2">
+                            <span>{member.name}</span>
+                            <span className="text-xs text-gray-500">({member.email})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                Assign To
+                <span className="text-red-500">*</span>
+              </label>
+              <Select value={assignTo} onValueChange={setAssignTo}>
+                <SelectTrigger className="w-full h-12">
+                  <div className="flex items-center justify-between w-full">
+                    <SelectValue placeholder="Select team member" />
+                    <RefreshCw className="w-4 h-4 text-gray-400" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {DUMMY_TEAM_MEMBERS.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{member.name}</span>
+                        <span className="text-xs text-gray-500">({member.email})</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 

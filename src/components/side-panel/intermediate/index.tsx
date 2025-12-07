@@ -19,9 +19,11 @@ const Intermediate = ({ closeSidePanel }: IntermediateProps) => {
       const nodeType = selectedNode.data?.config?.nodeType;
       const nodeName = selectedNode.data?.config?.nodeName || selectedNode.data?.label;
       
-      // Check if it's a router by nodeType or nodeName
+      // Check if it's a router or split by nodeType or nodeName
       if (nodeType === "flow_router" || nodeName === "Router") {
         setSelectedAction('flow_router');
+      } else if (nodeType === "flow_split" || nodeName === "Split") {
+        setSelectedAction('flow_split');
       } else {
         // Default to if/else
         setSelectedAction('flow_if_else');

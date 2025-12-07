@@ -12,7 +12,7 @@ type ActionsListProps = {
 
 const ActionsList = ({ closeSidePanel, setSelectedAction }: ActionsListProps) => {
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"all" | "flow" | "call" | "contact" | "searches" | "communication">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "decision" | "call" | "contact" | "searches" | "communication">("all");
   const actionsGroupedByCategory = getActionsGroupedByCategory();
 
   // Filter actions based on query and active tab
@@ -27,8 +27,8 @@ const ActionsList = ({ closeSidePanel, setSelectedAction }: ActionsListProps) =>
       groups = { "CONTACT": actionsGroupedByCategory["CONTACT"] || [] };
     } else if (activeTab === "searches") {
       groups = { "SEARCHES": actionsGroupedByCategory["SEARCHES"] || [] };
-    } else if (activeTab === "flow") {
-      groups = { "FLOW": actionsGroupedByCategory["FLOW"] || [] };
+    } else if (activeTab === "decision") {
+      groups = { "DECISION": actionsGroupedByCategory["DECISION"] || [] };
     } else if (activeTab === "communication") {
       groups = { "COMMUNICATION": actionsGroupedByCategory["COMMUNICATION"] || [] };
     }
@@ -95,14 +95,14 @@ const ActionsList = ({ closeSidePanel, setSelectedAction }: ActionsListProps) =>
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("flow")}
+            onClick={() => setActiveTab("decision")}
             className={`relative px-3 py-2 text-xs font-medium flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === "flow" ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
+              activeTab === "decision" ? "text-blue-600" : "text-gray-600 hover:text-gray-900"
             }`}
           >
             <Workflow className="w-3.5 h-3.5" />
-            Flow
-            {activeTab === "flow" && (
+            Decision
+            {activeTab === "decision" && (
               <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-blue-600" />
             )}
           </button>

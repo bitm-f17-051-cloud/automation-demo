@@ -16,10 +16,12 @@ const Branch = ({ closeSidePanel }: BranchProps) => {
   useEffect(() => {
     if (selectedNode) {
       setNodeData(selectedNode.data.config);
-      // Check if this is a router path node or if/else branch
+      // Check if this is a router path, split path, or if/else branch
       const nodeType = selectedNode.data.config?.nodeType;
       if (nodeType === "flow_router_path") {
         setSelectedAction("flow_router_path");
+      } else if (nodeType === "flow_split_path") {
+        setSelectedAction("flow_split_path");
       } else {
         setSelectedAction("flow_if_else_branch");
       }

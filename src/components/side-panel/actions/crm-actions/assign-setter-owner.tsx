@@ -12,8 +12,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronRight, XIcon } from "lucide-react";
+import { ChevronRight, XIcon, RefreshCw, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+
+// Dummy contacts data
+const DUMMY_CONTACTS = [
+  { id: "contact_1", name: "John Doe", email: "john.doe@example.com" },
+  { id: "contact_2", name: "Jane Smith", email: "jane.smith@example.com" },
+  { id: "contact_3", name: "Mike Johnson", email: "mike.johnson@example.com" },
+  { id: "contact_4", name: "Sarah Williams", email: "sarah.williams@example.com" },
+  { id: "contact_5", name: "David Brown", email: "david.brown@example.com" },
+  { id: "contact_6", name: "Emily Davis", email: "emily.davis@example.com" },
+  { id: "contact_7", name: "Robert Wilson", email: "robert.wilson@example.com" },
+  { id: "contact_8", name: "Lisa Anderson", email: "lisa.anderson@example.com" },
+];
+
+// Dummy closers data
+const DUMMY_CLOSERS = [
+  { id: "closer_1", name: "Alex Thompson", email: "alex.thompson@example.com" },
+  { id: "closer_2", name: "Maria Garcia", email: "maria.garcia@example.com" },
+  { id: "closer_3", name: "James Miller", email: "james.miller@example.com" },
+  { id: "closer_4", name: "Sophia Martinez", email: "sophia.martinez@example.com" },
+  { id: "closer_5", name: "William Taylor", email: "william.taylor@example.com" },
+  { id: "closer_6", name: "Olivia Anderson", email: "olivia.anderson@example.com" },
+  { id: "closer_7", name: "Michael Jackson", email: "michael.jackson@example.com" },
+  { id: "closer_8", name: "Emma White", email: "emma.white@example.com" },
+];
 
 type Props = {
   goBack: () => void;
@@ -25,7 +51,13 @@ const AssignSetterOwnerAction = ({ goBack, nodeData }: Props) => {
 
   const [actionName, setActionName] = useState(nodeData?.nodeName || "Assign Setter Owner");
   const [contactId, setContactId] = useState(nodeData?.nodeData?.contactId || "");
+  const [selectionType, setSelectionType] = useState<"round_robin" | "specific_setter">(
+    nodeData?.nodeData?.selectionType || "specific_setter"
+  );
   const [closerId, setCloserId] = useState(nodeData?.nodeData?.closerId || "");
+  const [selectedSetters, setSelectedSetters] = useState<string[]>(
+    nodeData?.nodeData?.selectedSetters || []
+  );
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -34,14 +66,22 @@ const AssignSetterOwnerAction = ({ goBack, nodeData }: Props) => {
       nodeType: "crm_assign_setter_owner",
       nodeName: actionName,
       nodeIcon: "add_update_fields",
-      nodeDescription: `Assign setter owner ${closerId} to contact ${contactId}`,
+      nodeDescription: selectionType === "round_robin" 
+        ? `Assign setter owners (round robin) to contact ${contactId}`
+        : `Assign setter owner ${closerId} to contact ${contactId}`,
       nodeData: {
         contactId,
-        closerId,
+        selectionType,
+        closerId: selectionType === "specific_setter" ? closerId : undefined,
+        selectedSetters: selectionType === "round_robin" ? selectedSetters : undefined,
       },
       properties: [
-        { key: "Contact Id", value: contactId },
-        { key: "Closer Id", value: closerId },
+        { key: "Contact", value: contactId },
+        { key: "Selection Type", value: selectionType === "round_robin" ? "Round Robin" : "Specific Setter" },
+        ...(selectionType === "round_robin" 
+          ? [{ key: "Setter Owners", value: selectedSetters.join(", ") }]
+          : [{ key: "Setter Owner", value: closerId }]
+        ),
       ],
     };
 
@@ -49,7 +89,11 @@ const AssignSetterOwnerAction = ({ goBack, nodeData }: Props) => {
     goBack();
   };
 
-  const isValid = contactId && closerId;
+  const isValid = contactId && (
+    selectionType === "round_robin" 
+      ? selectedSetters.length > 0 
+      : closerId
+  );
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -83,43 +127,136 @@ const AssignSetterOwnerAction = ({ goBack, nodeData }: Props) => {
 
           <Separator />
 
-          {/* Contact Id */}
+          {/* Contact */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Contact Id
+              Contact
               <span className="text-red-500">*</span>
             </label>
             <Select value={contactId} onValueChange={setContactId}>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
+                <div className="flex items-center justify-between w-full">
+                  <SelectValue placeholder="Select or map a field" />
+                  <RefreshCw className="w-4 h-4 text-gray-400" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="trigger.contact_id">Trigger: Contact ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.contact_id">Previous Action: Contact ID</SelectItem>
+                {DUMMY_CONTACTS.map((contact) => (
+                  <SelectItem key={contact.id} value={contact.id}>
+                    <div className="flex items-center gap-2">
+                      <span>{contact.name}</span>
+                      <span className="text-xs text-gray-500">({contact.email})</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Closer Id */}
+          {/* Selection Type */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Closer Id
+              Selection Type
               <span className="text-red-500">*</span>
             </label>
-            <Select value={closerId} onValueChange={setCloserId}>
+            <Select value={selectionType} onValueChange={(value) => setSelectionType(value as "round_robin" | "specific_setter")}>
               <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
+                <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="trigger.closer_id">Trigger: Closer ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.closer_id">Previous Action: Closer ID</SelectItem>
+                <SelectItem value="round_robin">Round Robin</SelectItem>
+                <SelectItem value="specific_setter">Specific Setter</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {/* Setter Owner */}
+          {selectionType === "round_robin" ? (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                Setter Owners
+                <span className="text-red-500">*</span>
+              </label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="w-full h-12 flex items-center justify-between px-3 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
+                    <span className={selectedSetters.length === 0 ? "text-gray-500" : ""}>
+                      {selectedSetters.length > 0
+                        ? `${selectedSetters.length} setter${selectedSetters.length > 1 ? "s" : ""} selected`
+                        : "Select setter owners"}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <RefreshCw className="w-4 h-4 text-gray-400" />
+                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-full">
+                  <div className="p-2">
+                    <div className="max-h-48 overflow-y-auto">
+                      {DUMMY_CLOSERS.map((closer) => (
+                        <div
+                          key={closer.id}
+                          className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => {
+                            if (selectedSetters.includes(closer.id)) {
+                              setSelectedSetters(selectedSetters.filter(id => id !== closer.id));
+                            } else {
+                              setSelectedSetters([...selectedSetters, closer.id]);
+                            }
+                          }}
+                        >
+                          <Checkbox
+                            checked={selectedSetters.includes(closer.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedSetters([...selectedSetters, closer.id]);
+                              } else {
+                                setSelectedSetters(selectedSetters.filter(id => id !== closer.id));
+                              }
+                            }}
+                          />
+                          <div className="flex items-center gap-2">
+                            <span>{closer.name}</span>
+                            <span className="text-xs text-gray-500">({closer.email})</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                Setter Owner
+                <span className="text-red-500">*</span>
+              </label>
+              <Select value={closerId} onValueChange={setCloserId}>
+                <SelectTrigger className="w-full h-12">
+                  <div className="flex items-center justify-between w-full">
+                    <SelectValue placeholder="Select or map a field" />
+                    <RefreshCw className="w-4 h-4 text-gray-400" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  {DUMMY_CLOSERS.map((closer) => (
+                    <SelectItem key={closer.id} value={closer.id}>
+                      <div className="flex items-center gap-2">
+                        <span>{closer.name}</span>
+                        <span className="text-xs text-gray-500">({closer.email})</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
 
