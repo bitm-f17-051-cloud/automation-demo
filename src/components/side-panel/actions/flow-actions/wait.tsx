@@ -75,6 +75,14 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
   const [waitSeconds, setWaitSeconds] = useState<number>(
     nodeData?.nodeData?.waitSeconds || 0
   );
+  
+  // Wait for reply duration
+  const [replyWaitDuration, setReplyWaitDuration] = useState<number>(
+    nodeData?.nodeData?.replyWaitDuration || 1
+  );
+  const [replyWaitDurationUnit, setReplyWaitDurationUnit] = useState<string>(
+    nodeData?.nodeData?.replyWaitDurationUnit || "hours"
+  );
 
   // Check if form is valid
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
@@ -89,11 +97,11 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
     } else if (waitType === "CONTACT_STATUS_CHANGED") {
       isValid = Boolean(finalStatus) && waitSeconds > 0;
     } else if (waitType === "WAIT_FOR_REPLY") {
-      isValid = true; // No additional configuration needed
+      isValid = replyWaitDuration > 0 && Boolean(replyWaitDurationUnit);
     }
 
     setIsSaveDisabled(!isValid);
-  }, [waitType, duration, durationUnit, selectedDate, selectedTime, finalStatus, waitSeconds]);
+  }, [waitType, duration, durationUnit, selectedDate, selectedTime, finalStatus, waitSeconds, replyWaitDuration, replyWaitDurationUnit]);
 
   const saveAction = () => {
     if (!selectedNodeId || !waitType) return;
@@ -110,7 +118,7 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
         const statusLabel = Object.values(SCHEDULING_STATUS).find(s => s.value === finalStatus)?.label || finalStatus;
         generatedDescription = `Wait for status: ${statusLabel} (max ${waitSeconds}s)`;
       } else if (waitType === "WAIT_FOR_REPLY") {
-        generatedDescription = "Wait for reply";
+        generatedDescription = `Wait for reply (max ${replyWaitDuration} ${replyWaitDurationUnit})`;
       }
     }
 
@@ -127,6 +135,8 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
         time: selectedTime,
         finalStatus: waitType === "CONTACT_STATUS_CHANGED" ? finalStatus : undefined,
         waitSeconds: waitType === "CONTACT_STATUS_CHANGED" ? waitSeconds : undefined,
+        replyWaitDuration: waitType === "WAIT_FOR_REPLY" ? replyWaitDuration : undefined,
+        replyWaitDurationUnit: waitType === "WAIT_FOR_REPLY" ? replyWaitDurationUnit : undefined,
       },
       properties: [],
     };
@@ -395,9 +405,34 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
           {/* Wait for Reply Configuration */}
           {waitType === "WAIT_FOR_REPLY" && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <p className="text-sm text-gray-700">
-                The workflow will pause until the contact replies to a message.
-              </p>
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Wait Duration</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Amount"
+                  value={replyWaitDuration}
+                  onChange={(e) => setReplyWaitDuration(Number(e.target.value))}
+                  className="w-1/2 bg-white"
+                />
+                <Select value={replyWaitDurationUnit} onValueChange={setReplyWaitDurationUnit}>
+                  <SelectTrigger className="w-1/2 bg-white">
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="seconds">Seconds</SelectItem>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="days">Days</SelectItem>
+                    <SelectItem value="weeks">Weeks</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {replyWaitDuration > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Will wait for reply up to {replyWaitDuration} {replyWaitDurationUnit}
+                </p>
+              )}
             </div>
           )}
         </div>
