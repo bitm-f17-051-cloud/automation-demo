@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithFilterPanel } from "@/components/ui/select-with-filter-panel";
 import { XIcon, Trash2, Plus } from "lucide-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -295,49 +296,12 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
                     <div className="space-y-3">
                       {/* Filter Type + Comparison Operator Row */}
                       <div className="flex items-center gap-3">
-                        <Select value={row.type} onValueChange={(value) => setRowType(row.id, value as FilterType)}>
-                          <SelectTrigger className="flex-1 h-11 bg-white border-gray-300 text-gray-900">
-                            <SelectValue placeholder="Select filter" className="text-gray-900" />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[400px]">
-                            {/* Root level fields */}
-                            <SelectItem value="id" className="font-mono text-xs">ID</SelectItem>
-                            <SelectItem value="direction" className="font-mono text-xs">direction</SelectItem>
-                            <SelectItem value="status" className="font-mono text-xs">status</SelectItem>
-                            <SelectItem value="started_at" className="font-mono text-xs">started_at</SelectItem>
-                            <SelectItem value="ended_at" className="font-mono text-xs">ended_at</SelectItem>
-                            <SelectItem value="duration" className="font-mono text-xs">duration</SelectItem>
-                            <SelectItem value="missed_call" className="font-mono text-xs">missed_call</SelectItem>
-                            <SelectItem value="recording_url" className="font-mono text-xs">recording_url</SelectItem>
-                            <SelectItem value="voicemail" className="font-mono text-xs">voicemail</SelectItem>
-                            
-                            {/* Users object */}
-                            <div className="px-2 py-1 text-xs font-semibold text-gray-900 mt-1">users</div>
-                            <SelectItem value="users.id" className="pl-6 font-mono text-xs">ID</SelectItem>
-                            <SelectItem value="users.name" className="pl-6 font-mono text-xs">name</SelectItem>
-                            <SelectItem value="users.email" className="pl-6 font-mono text-xs">email</SelectItem>
-                            
-                            {/* Contacts object */}
-                            <div className="px-2 py-1 text-xs font-semibold text-gray-900 mt-1">contacts</div>
-                            <SelectItem value="contacts.id" className="pl-6 font-mono text-xs">ID</SelectItem>
-                            <SelectItem value="contacts.name" className="pl-6 font-mono text-xs">name</SelectItem>
-                            
-                            {/* Contacts.phone_number nested */}
-                            <div className="pl-6 py-1 text-xs font-medium text-gray-700">phone_number</div>
-                            <SelectItem value="contacts.phone_number.value" className="pl-10 font-mono text-xs">value</SelectItem>
-                            
-                            {/* Contacts.number nested */}
-                            <div className="pl-6 py-1 text-xs font-medium text-gray-700">number</div>
-                            <SelectItem value="contacts.number.id" className="pl-10 font-mono text-xs">id</SelectItem>
-                            <SelectItem value="contacts.number.name" className="pl-10 font-mono text-xs">name</SelectItem>
-                            <SelectItem value="contacts.number.digits" className="pl-10 font-mono text-xs">digits</SelectItem>
-                            
-                            {/* Remaining contacts fields */}
-                            <SelectItem value="contacts.tags" className="pl-6 font-mono text-xs">tags</SelectItem>
-                            <SelectItem value="contacts.notes" className="pl-6 font-mono text-xs">notes</SelectItem>
-                            <SelectItem value="contacts.custom_fields" className="pl-6 font-mono text-xs">custom_fields</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <SelectWithFilterPanel
+                          value={row.type}
+                          onValueChange={(value) => setRowType(row.id, value as FilterType)}
+                          placeholder="Select filter"
+                          className="flex-1 h-11 bg-white border-gray-300"
+                        />
 
                         {row.type && (
                           <Select 
