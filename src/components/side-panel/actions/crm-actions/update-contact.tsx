@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -108,16 +109,17 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
               Contact Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={contactId} onValueChange={setContactId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.contact_id">Trigger: Contact ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.contact_id">Previous Action: Contact ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={contactId}
+              onValueChange={setContactId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.contact_id", label: "Trigger: Contact ID" },
+                { value: "trigger.user_id", label: "Trigger: User ID" },
+                { value: "previous_action.contact_id", label: "Previous Action: Contact ID" },
+              ]}
+            />
           </div>
 
           {/* First Name */}
@@ -204,18 +206,20 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
               <ChevronRight className="w-4 h-4 text-gray-400" />
               Status
             </label>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="trigger.status">Trigger: Status</SelectItem>
-                <SelectItem value="previous_action.status">Previous Action: Status</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={status}
+              onValueChange={setStatus}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.status", label: "Trigger: Status" },
+                { value: "previous_action.status", label: "Previous Action: Status" },
+              ]}
+            >
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectWithVariablePanel>
           </div>
         </div>
       </div>

@@ -23,7 +23,7 @@ export const CONTACT_TRIGGERS = {
   },
   CUSTOM_CONTACT_FIELD_UPDATED: {
     value: 'inbound_custom_contact_field_updated',
-    label: 'Contact Custom field',
+    label: 'Field Updated',
     icon: FieldUpdatedIcon,
     category: 'Contact',
     description: 'Triggers when a contact custom field is updated.'

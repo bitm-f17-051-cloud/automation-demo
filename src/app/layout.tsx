@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import ReactQueryProvider from "@/lib/react-query-provider";
+import { VariableSelectorProvider } from "@/contexts/variable-selector-context";
+import { FilterTypeSelectorProvider } from "@/contexts/filter-type-selector-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +31,14 @@ export default function RootLayout({
       <head />
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ReactQueryProvider>
-          <Header />
-          <main className="h-[calc(100vh-52px)] flex flex-col bg-gray-50">
-            {children}
-          </main>
+          <VariableSelectorProvider>
+            <FilterTypeSelectorProvider>
+              <Header />
+              <main className="h-[calc(100vh-52px)] flex flex-col bg-gray-50">
+                {children}
+              </main>
+            </FilterTypeSelectorProvider>
+          </VariableSelectorProvider>
         </ReactQueryProvider>
       </body>
     </html>

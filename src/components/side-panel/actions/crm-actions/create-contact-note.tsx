@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -94,16 +95,17 @@ const CreateContactNoteAction = ({ goBack, nodeData }: Props) => {
               Select Contact
               <span className="text-red-500">*</span>
             </label>
-            <Select value={selectContact} onValueChange={setSelectContact}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.contact_id">Trigger: Contact ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.contact_id">Previous Action: Contact ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={selectContact}
+              onValueChange={setSelectContact}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.contact_id", label: "Trigger: Contact ID" },
+                { value: "trigger.user_id", label: "Trigger: User ID" },
+                { value: "previous_action.contact_id", label: "Previous Action: Contact ID" },
+              ]}
+            />
           </div>
 
           {/* Email Address */}

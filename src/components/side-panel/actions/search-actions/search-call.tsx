@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon, Globe, Info } from "lucide-react";
 import { useState } from "react";
 
@@ -96,16 +97,17 @@ const SearchCallAction = ({ goBack, nodeData }: Props) => {
               Contact Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={contactId} onValueChange={setContactId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.contact_id">Trigger: Contact ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.contact_id">Previous Action: Contact ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={contactId}
+              onValueChange={setContactId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.contact_id", label: "Trigger: Contact ID" },
+                { value: "trigger.user_id", label: "Trigger: User ID" },
+                { value: "previous_action.contact_id", label: "Previous Action: Contact ID" },
+              ]}
+            />
           </div>
 
           {/* Date */}
@@ -161,16 +163,17 @@ const SearchCallAction = ({ goBack, nodeData }: Props) => {
               <ChevronRight className="w-4 h-4 text-gray-400" />
               Closer Id
             </label>
-            <Select value={closerId} onValueChange={setCloserId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.closer_id">Trigger: Closer ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.closer_id">Previous Action: Closer ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={closerId}
+              onValueChange={setCloserId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.closer_id", label: "Trigger: Closer ID" },
+                { value: "trigger.user_id", label: "Trigger: User ID" },
+                { value: "previous_action.closer_id", label: "Previous Action: Closer ID" },
+              ]}
+            />
           </div>
         </div>
       </div>

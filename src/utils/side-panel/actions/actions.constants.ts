@@ -236,7 +236,7 @@ export const WAIT_CONDITIONS = {
 
 export const getAllActions = () => {
   return [
-    ...Object.values(FLOW_ACTIONS),
+    ...Object.values(FLOW_ACTIONS).filter(action => action.value !== 'flow_split'),
     ...Object.values(CALL_ACTIONS),
     ...Object.values(CONTACT_ACTIONS),
     ...Object.values(SEARCH_ACTIONS),

@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon, RefreshCw } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useObjectFields } from "@/hooks/queries/useObjectFields";
@@ -116,24 +117,14 @@ const UpdateContactStageAction = ({ goBack, nodeData }: Props) => {
               Contact Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={contactId} onValueChange={setContactId}>
-              <SelectTrigger className="w-full h-12">
-                <div className="flex items-center justify-between w-full">
-                  <SelectValue placeholder="Select or map a field" />
-                  <RefreshCw className="w-4 h-4 text-gray-400" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                {DUMMY_CONTACTS.map((contact) => (
-                  <SelectItem key={contact.id} value={contact.id}>
-                    <div className="flex items-center gap-2">
-                      <span>{contact.name}</span>
-                      <span className="text-xs text-gray-500">({contact.email})</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={contactId}
+              onValueChange={setContactId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              displayValue={contactId ? DUMMY_CONTACTS.find(c => c.id === contactId)?.name : undefined}
+              triggerContent={<RefreshCw className="w-4 h-4 text-gray-400" />}
+            />
           </div>
 
           {/* Contact Stage */}

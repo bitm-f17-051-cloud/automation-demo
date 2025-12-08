@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -90,16 +91,17 @@ const UpdateContactCustomFieldAction = ({ goBack, nodeData }: Props) => {
               Contact Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={contactId} onValueChange={setContactId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.contact_id">Trigger: Contact ID</SelectItem>
-                <SelectItem value="trigger.user_id">Trigger: User ID</SelectItem>
-                <SelectItem value="previous_action.contact_id">Previous Action: Contact ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={contactId}
+              onValueChange={setContactId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.contact_id", label: "Trigger: Contact ID" },
+                { value: "trigger.user_id", label: "Trigger: User ID" },
+                { value: "previous_action.contact_id", label: "Previous Action: Contact ID" },
+              ]}
+            />
           </div>
 
           {/* Custom Field Id */}
@@ -109,18 +111,20 @@ const UpdateContactCustomFieldAction = ({ goBack, nodeData }: Props) => {
               Custom Field Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={customFieldId} onValueChange={setCustomFieldId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="custom_field_1">Custom Field 1</SelectItem>
-                <SelectItem value="custom_field_2">Custom Field 2</SelectItem>
-                <SelectItem value="custom_field_3">Custom Field 3</SelectItem>
-                <SelectItem value="trigger.custom_field_id">Trigger: Custom Field ID</SelectItem>
-                <SelectItem value="previous_action.custom_field_id">Previous Action: Custom Field ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={customFieldId}
+              onValueChange={setCustomFieldId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.custom_field_id", label: "Trigger: Custom Field ID" },
+                { value: "previous_action.custom_field_id", label: "Previous Action: Custom Field ID" },
+              ]}
+            >
+              <SelectItem value="custom_field_1">Custom Field 1</SelectItem>
+              <SelectItem value="custom_field_2">Custom Field 2</SelectItem>
+              <SelectItem value="custom_field_3">Custom Field 3</SelectItem>
+            </SelectWithVariablePanel>
           </div>
         </div>
       </div>

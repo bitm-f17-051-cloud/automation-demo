@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon, RefreshCw, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -212,24 +213,14 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
                 Assign To
                 <span className="text-red-500">*</span>
               </label>
-              <Select value={assignTo} onValueChange={setAssignTo}>
-                <SelectTrigger className="w-full h-12">
-                  <div className="flex items-center justify-between w-full">
-                    <SelectValue placeholder="Select team member" />
-                    <RefreshCw className="w-4 h-4 text-gray-400" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {DUMMY_TEAM_MEMBERS.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      <div className="flex items-center gap-2">
-                        <span>{member.name}</span>
-                        <span className="text-xs text-gray-500">({member.email})</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SelectWithVariablePanel
+                value={assignTo}
+                onValueChange={setAssignTo}
+                placeholder="Select team member"
+                className="w-full h-12"
+                displayValue={assignTo ? DUMMY_TEAM_MEMBERS.find(m => m.id === assignTo)?.name : undefined}
+                triggerContent={<RefreshCw className="w-4 h-4 text-gray-400" />}
+              />
             </div>
           )}
         </div>

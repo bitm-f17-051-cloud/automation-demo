@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -91,16 +92,17 @@ const CancelCallAction = ({ goBack, nodeData }: Props) => {
               Event Call Id
               <span className="text-red-500">*</span>
             </label>
-            <Select value={eventCallId} onValueChange={setEventCallId}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select or map a field" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="trigger.call_id">Trigger: Call ID</SelectItem>
-                <SelectItem value="trigger.event_id">Trigger: Event ID</SelectItem>
-                <SelectItem value="previous_action.call_id">Previous Action: Call ID</SelectItem>
-              </SelectContent>
-            </Select>
+            <SelectWithVariablePanel
+              value={eventCallId}
+              onValueChange={setEventCallId}
+              placeholder="Select or map a field"
+              className="w-full h-12"
+              variableOptions={[
+                { value: "trigger.call_id", label: "Trigger: Call ID" },
+                { value: "trigger.event_id", label: "Trigger: Event ID" },
+                { value: "previous_action.call_id", label: "Previous Action: Call ID" },
+              ]}
+            />
           </div>
 
           {/* Cancel Reason */}

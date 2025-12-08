@@ -11,10 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { XIcon, Check, Trash2, Plus, Sparkles, RefreshCw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { XIcon, Check, Trash2, Plus, Sparkles, RefreshCw, ChevronRight, Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { FieldUpdatedIcon } from "@/components/assets/icons/triggers";
+import {
+  ContactIcon,
+  CallIcon,
+  EventIcon,
+  DealIcon,
+  UserIcon,
+} from "@/components/assets/icons/objects";
 
 type Props = {
   goBack: () => void;
@@ -22,15 +30,41 @@ type Props = {
   selectedTrigger: string;
 };
 
-// Mock custom fields - in a real app, these would come from an API
-const CUSTOM_FIELDS = [
-  "No Sales Reason",
-  "Abdul Rehman",
-  "cha",
-  "Checkbox 1",
-  "testing",
-  "field",
-  "uujjbj"
+// Object types for field selection
+const OBJECT_TYPES = {
+  CONTACT: "CONTACT",
+  CALL: "CALL",
+  EVENT: "EVENT",
+  DEAL: "DEAL",
+  USER: "USER",
+} as const;
+
+const ObjectTypeData = [
+  {
+    type: OBJECT_TYPES.CONTACT,
+    name: "Contact",
+    icon: ContactIcon,
+  },
+  {
+    type: OBJECT_TYPES.CALL,
+    name: "Call",
+    icon: CallIcon,
+  },
+  {
+    type: OBJECT_TYPES.EVENT,
+    name: "Event",
+    icon: EventIcon,
+  },
+  {
+    type: OBJECT_TYPES.DEAL,
+    name: "Deal",
+    icon: DealIcon,
+  },
+  {
+    type: OBJECT_TYPES.USER,
+    name: "User",
+    icon: UserIcon,
+  },
 ];
 
 // Trigger Output Fields - Nested structure matching API response
@@ -86,8 +120,9 @@ type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
 const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
-  const [triggerName, setTriggerName] = useState<string>(nodeData?.nodeName || "Contact Custom field" || "Trigger");
-  const [selectedCustomField, setSelectedCustomField] = useState<string>(nodeData?.nodeData?.customField || "");
+  const [triggerName, setTriggerName] = useState<string>(nodeData?.nodeName || "Field Updated" || "Trigger");
+  const [selectedObjectType, setSelectedObjectType] = useState<string | null>(nodeData?.nodeData?.objectType || null);
+  const [isObjectTypePopoverOpen, setIsObjectTypePopoverOpen] = useState(false);
 
   // Row-based filters with AND/OR logic
   type FilterRow = { 
@@ -190,9 +225,9 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
 
     const properties: Array<{ key: string; value: any }> = [];
     
-    // Add custom field to properties
-    if (selectedCustomField) {
-      properties.push({ key: "customField", value: selectedCustomField });
+    // Add object type to properties
+    if (selectedObjectType) {
+      properties.push({ key: "objectType", value: selectedObjectType });
     }
     
     // Add filters to properties - all are text fields now
@@ -211,7 +246,7 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
       nodeIcon: "field_updated",
       nodeDescription: "",
       nodeData: {
-        customField: selectedCustomField,
+        objectType: selectedObjectType,
         filters: filters,
       },
       properties,
@@ -284,45 +319,73 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
 
         <Separator className="bg-gray-200" />
 
-        {/* Custom Field Selector */}
+        {/* Field Selector */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">
-            Select Custom Field <span className="text-red-500">*</span>
+            Select Field <span className="text-red-500">*</span>
           </label>
-          <Select
-            value={selectedCustomField}
-            onValueChange={setSelectedCustomField}
-          >
-            <SelectTrigger className="w-full bg-white border-gray-300">
-              <div className="flex items-center justify-between w-full">
-                <SelectValue placeholder="Select a custom field" />
+          <Popover open={isObjectTypePopoverOpen} onOpenChange={setIsObjectTypePopoverOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={`w-full flex items-center justify-between px-3 py-2.5 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors ${
+                  selectedObjectType
+                    ? "text-gray-900"
+                    : "text-gray-500"
+                }`}
+              >
                 <div className="flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-gray-400" />
+                  {selectedObjectType ? (() => {
+                    const selectedObject = ObjectTypeData.find(obj => obj.type === selectedObjectType);
+                    const IconComponent = selectedObject?.icon;
+                    return (
+                      <>
+                        {IconComponent && <IconComponent className="w-4 h-4" />}
+                        <span className="font-medium">
+                          {selectedObject?.name}
+                        </span>
+                      </>
+                    );
+                  })() : (
+                    <span>Select field</span>
+                  )}
                 </div>
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <div className="px-3 py-2 border-b border-gray-200">
-                <div className="relative">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-full" align="start">
+              <div className="p-0 pb-2">
+                <div className="p-3 relative">
                   <Input
-                    type="text"
-                    placeholder="Search..."
-                    className="w-full pl-8"
+                    placeholder="Search"
+                    className="pl-[36px] py-1.5"
                   />
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
+                  <SearchIcon
+                    className="w-4 h-4 text-gray-800 opacity-50 absolute left-6 top-1/2 -translate-y-1/2"
+                    strokeWidth={3}
+                  />
                 </div>
+                {ObjectTypeData?.map((object) => (
+                  <div
+                    key={object.type}
+                    onClick={() => {
+                      setSelectedObjectType(object.type);
+                      setIsObjectTypePopoverOpen(false);
+                    }}
+                    className="flex items-center justify-between px-[14px] py-1.5 hover:bg-blue-50 cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <object.icon className="w-4 h-4" />
+                      <span className="font-medium text-sm capitalize">
+                        {object.name}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-800 opacity-50" />
+                  </div>
+                ))}
               </div>
-              {CUSTOM_FIELDS.map(field => (
-                <SelectItem key={field} value={field}>
-                  {field}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <Separator className="bg-gray-200" />

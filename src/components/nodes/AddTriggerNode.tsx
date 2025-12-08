@@ -61,7 +61,7 @@ export const AddTriggerNode: React.FC<NodeProps> = (props) => {
           <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center flex-shrink-0">
             <PlusIcon className="w-5 h-5 text-blue-600" />
           </div>
-          <span className="text-sm font-semibold text-blue-600">
+          <span className="text-sm font-medium text-blue-600">
             Add New Trigger
           </span>
         </button>
