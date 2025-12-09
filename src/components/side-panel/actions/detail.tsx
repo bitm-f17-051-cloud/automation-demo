@@ -37,6 +37,7 @@ import SearchUsersAction from "./search-actions/search-users";
 // Communication Actions
 import SendMessagesAction from "./communication-actions/send-messages";
 import AssignChatAction from "./communication-actions/assign-chat";
+import UnassignChatAction from "./communication-actions/unassign-chat";
 import CloseConversationAction from "./communication-actions/close-conversation";
 import OpenConversationAction from "./communication-actions/open-conversation";
 
@@ -81,6 +82,7 @@ const ACTIONS_COMPONENTS = {
   // Communication Actions
   'comm_send_messages': SendMessagesAction,
   'comm_assign_chat': AssignChatAction,
+  'comm_unassign_chat': UnassignChatAction,
   'comm_close_conversation': CloseConversationAction,
   'comm_open_conversation': OpenConversationAction,
 } as const;

@@ -13,20 +13,20 @@ type Props = {
   nodeData: { [key: string]: any } | undefined;
 };
 
-const OpenConversationAction = ({ goBack, nodeData }: Props) => {
+const UnassignChatAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
-  const [actionName, setActionName] = useState(nodeData?.nodeName || "Open conversation");
+  const [actionName, setActionName] = useState(nodeData?.nodeName || "Un-Assign a chat");
   const [conversationId, setConversationId] = useState(nodeData?.nodeData?.conversationId || "");
 
   const saveAction = () => {
     if (!selectedNodeId) return;
 
     const config = {
-      nodeType: "comm_open_conversation",
+      nodeType: "comm_unassign_chat",
       nodeName: actionName,
-      nodeIcon: "add_note",
-      nodeDescription: `Open conversation ${conversationId}`,
+      nodeIcon: "add_update_fields",
+      nodeDescription: `Un-assign chat ${conversationId}`,
       nodeData: {
         conversationId,
       },
@@ -46,7 +46,7 @@ const OpenConversationAction = ({ goBack, nodeData }: Props) => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-gray-900">Open conversation</h2>
+          <h2 className="text-base font-semibold text-gray-900">Un-Assign a chat</h2>
           <button
             onClick={goBack}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -54,7 +54,7 @@ const OpenConversationAction = ({ goBack, nodeData }: Props) => {
             <XIcon className="w-5 h-5 text-gray-500" />
           </button>
         </div>
-        <p className="text-sm text-gray-500">Open or reopen a conversation</p>
+        <p className="text-sm text-gray-500">Un-assign a chat conversation</p>
       </div>
 
       {/* Scrollable Content */}
@@ -102,5 +102,5 @@ const OpenConversationAction = ({ goBack, nodeData }: Props) => {
   );
 };
 
-export default OpenConversationAction;
+export default UnassignChatAction;
 

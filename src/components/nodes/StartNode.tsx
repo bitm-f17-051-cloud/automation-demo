@@ -105,8 +105,7 @@ export const StartNode: React.FC<NodeProps> = (props) => {
     >
       {/* Header Bar */}
       {config && (
-        <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-          <span className="text-xs text-gray-500 font-mono">{config.nodeType}</span>
+        <div className="px-3 py-1.5 bg-gray-50 border-b border-gray-200 flex items-center justify-end">
           <div className="flex items-center gap-1.5">
             <button className="w-5 h-5 flex items-center justify-center hover:bg-gray-200 rounded transition-colors">
               <Play className="w-3 h-3 text-gray-600" />

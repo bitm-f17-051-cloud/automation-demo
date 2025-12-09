@@ -70,10 +70,10 @@ export const CONTACT_ACTIONS = {
   },
   UPDATE_CONTACT_CUSTOM_FIELD: {
     value: 'crm_update_contact_custom_field',
-    label: 'Update Contact Custom Field',
+    label: 'Update Field',
     icon: AddUpdateFieldsIcon,
     category: 'CONTACT',
-    description: 'Action to update a contact custom field in iClosed.'
+    description: 'Action to update a contact field in iClosed.'
   },
   UPDATE_SETTER_OWNER: {
     value: 'crm_update_setter_owner',
@@ -145,21 +145,26 @@ export const COMMUNICATION_ACTIONS = {
     category: 'COMMUNICATION',
     description: 'Assign a chat conversation to a team member'
   },
+  UNASSIGN_CHAT: {
+    value: 'comm_unassign_chat',
+    label: 'Un-Assign a chat',
+    icon: AddUpdateFieldsIcon,
+    category: 'COMMUNICATION',
+    description: 'Un-assign a chat conversation'
+  },
   CLOSE_CONVERSATION: {
     value: 'comm_close_conversation',
     label: 'Close conversation',
     icon: AddNoteIcon,
     category: 'COMMUNICATION',
-    description: 'Close an active conversation',
-    tag: 'Need Discussion'
+    description: 'Close an active conversation'
   },
   OPEN_CONVERSATION: {
     value: 'comm_open_conversation',
     label: 'Open conversation',
     icon: AddNoteIcon,
     category: 'COMMUNICATION',
-    description: 'Open or reopen a conversation',
-    tag: 'Need Discussion'
+    description: 'Open or reopen a conversation'
   }
 } as const;
 

@@ -41,6 +41,13 @@ export const CONTACT_TRIGGERS = {
     icon: FieldUpdatedIcon,
     category: 'Contact',
     description: 'Triggers when a note is added.'
+  },
+  WATCH_CONTACT_BY_STATUS: {
+    value: 'scheduler_watch_contact_by_status',
+    label: 'Contact by Scheduling Status',
+    icon: FieldUpdatedIcon,
+    category: 'Contact',
+    description: 'Triggers when a contact scheduling status changes.'
   }
 } as const;
 
@@ -86,13 +93,6 @@ export const SCHEDULER_TRIGGERS = {
     icon: ContactCreatedIcon,
     category: 'Scheduler',
     description: 'Triggers when a setter owner is assigned to a contact.'
-  },
-  WATCH_CONTACT_BY_STATUS: {
-    value: 'scheduler_watch_contact_by_status',
-    label: 'Contact by Status',
-    icon: FieldUpdatedIcon,
-    category: 'Scheduler',
-    description: 'Triggers when a contact status changes.'
   }
 } as const;
 

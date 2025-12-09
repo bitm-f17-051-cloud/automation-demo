@@ -2,7 +2,6 @@
 
 import { Input } from "@/components/ui/input";
 import { DynamicInput } from "@/components/ui/dynamic-input";
-import { DynamicTextarea } from "@/components/ui/dynamic-textarea";
 import PrimaryButton from "@/components/ui/primary-button";
 import { Separator } from "@/components/ui/separator";
 import { useWorkflowStore } from "@/store/workflow.store";
@@ -19,7 +18,6 @@ const CloseConversationAction = ({ goBack, nodeData }: Props) => {
 
   const [actionName, setActionName] = useState(nodeData?.nodeName || "Close conversation");
   const [conversationId, setConversationId] = useState(nodeData?.nodeData?.conversationId || "");
-  const [reason, setReason] = useState(nodeData?.nodeData?.reason || "");
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -31,11 +29,9 @@ const CloseConversationAction = ({ goBack, nodeData }: Props) => {
       nodeDescription: `Close conversation ${conversationId}`,
       nodeData: {
         conversationId,
-        reason,
       },
       properties: [
         { key: "Conversation ID", value: conversationId },
-        ...(reason ? [{ key: "Reason", value: reason }] : []),
       ],
     };
 
@@ -50,12 +46,7 @@ const CloseConversationAction = ({ goBack, nodeData }: Props) => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-semibold text-gray-900">Close conversation</h2>
-            <span className="px-2 py-0.5 text-xs font-medium bg-amber-100 text-amber-800 rounded-md border border-amber-200">
-              Need Discussion
-            </span>
-          </div>
+          <h2 className="text-base font-semibold text-gray-900">Close conversation</h2>
           <button
             onClick={goBack}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -93,20 +84,6 @@ const CloseConversationAction = ({ goBack, nodeData }: Props) => {
               placeholder="Enter conversation ID"
               value={conversationId}
               onChange={setConversationId}
-            />
-          </div>
-
-          {/* Reason */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              Reason
-            </label>
-            <DynamicTextarea
-              placeholder="Enter reason (optional)"
-              minHeight="100px"
-              value={reason}
-              onChange={setReason}
             />
           </div>
         </div>

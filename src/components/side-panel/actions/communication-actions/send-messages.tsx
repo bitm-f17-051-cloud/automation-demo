@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import {
   Dialog,
   DialogContent,
@@ -426,34 +425,18 @@ const SendMessagesAction = ({ goBack, nodeData }: Props) => {
                     Account
                     <span className="text-red-500">*</span>
                   </label>
-                  {isAccountReadonly ? (
-                    <Select value={account} onValueChange={setAccount} disabled={isAccountReadonly}>
-                      <SelectTrigger className={`w-full h-12 ${isAccountReadonly ? 'bg-gray-50 cursor-not-allowed' : ''}`}>
-                        <SelectValue placeholder={`Select ${getChannelName(channel)} account`} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getAccountOptions().map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <SelectWithVariablePanel
-                      value={account}
-                      onValueChange={setAccount}
-                      placeholder={`Select ${getChannelName(channel)} account`}
-                      className="w-full h-12"
-                      variableOptions={getAccountOptions().filter(opt => opt.value.startsWith('trigger.') || opt.value.startsWith('previous_action.'))}
-                    >
-                      {getAccountOptions().filter(opt => !opt.value.startsWith('trigger.') && !opt.value.startsWith('previous_action.')).map((option) => (
+                  <Select value={account} onValueChange={setAccount} disabled={isAccountReadonly}>
+                    <SelectTrigger className={`w-full h-12 ${isAccountReadonly ? 'bg-gray-50 cursor-not-allowed' : ''}`}>
+                      <SelectValue placeholder={`Select ${getChannelName(channel)} account`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getAccountOptions().map((option) => (
                         <SelectItem key={option.value} value={option.value}>
                           {option.label}
                         </SelectItem>
                       ))}
-                    </SelectWithVariablePanel>
-                  )}
+                    </SelectContent>
+                  </Select>
                 </div>
               </>
             )}
