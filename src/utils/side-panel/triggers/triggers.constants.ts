@@ -86,6 +86,13 @@ export const SCHEDULER_TRIGGERS = {
     icon: ContactCreatedIcon,
     category: 'Scheduler',
     description: 'Triggers when a setter owner is assigned to a contact.'
+  },
+  WATCH_CONTACT_BY_STATUS: {
+    value: 'scheduler_watch_contact_by_status',
+    label: 'Contact by Status',
+    icon: FieldUpdatedIcon,
+    category: 'Scheduler',
+    description: 'Triggers when a contact status changes.'
   }
 } as const;
 

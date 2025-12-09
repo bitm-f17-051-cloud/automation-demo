@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectWithFilterPanel } from "@/components/ui/select-with-filter-panel";
-import { XIcon, Trash2, Plus, Sparkles } from "lucide-react";
+import { XIcon, Trash2, Plus, Sparkles, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { v4 as uuidv4 } from "uuid";
@@ -93,6 +93,11 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
     Added: false,
     Updated: false,
   });
+  
+  // Contact by Status states
+  const [finalStatus, setFinalStatus] = useState<string>(nodeData?.nodeData?.finalStatus || "");
+  const [waitSeconds, setWaitSeconds] = useState<string>(nodeData?.nodeData?.waitSeconds?.toString() || "");
+  const [sendLastActiveStatus, setSendLastActiveStatus] = useState<string>(nodeData?.nodeData?.sendLastActiveStatus || "");
 
   // Filter state
   type FilterRow = { 
@@ -147,6 +152,9 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
       setOutcomes(nd.outcomes || outcomes);
       setEventTypes(nd.eventTypes || eventTypes);
       setTriggerOutcomeFlags(nd.triggerOutcomeFlags || triggerOutcomeFlags);
+      setFinalStatus(nd.finalStatus || "");
+      setWaitSeconds(nd.waitSeconds?.toString() || "");
+      setSendLastActiveStatus(nd.sendLastActiveStatus || "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId, nodeData]);
@@ -161,6 +169,7 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
   const showOutcomeFlags = selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME;
   const showFilters = 
     selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CALL_OUTCOME;
+  const showContactByStatus = selectedTrigger === TriggersEnum.SCHEDULER_WATCH_CONTACT_BY_STATUS;
 
   const isSaveDisabled = useMemo(() => {
     // very light validation to enable save
@@ -168,8 +177,9 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
     if (showEventType && !Object.values(eventTypes).some(v => v)) return true;
     if (showOutcomes && !Object.values(outcomes).some(v => v)) return true;
     if (showOutcomeFlags && !Object.values(triggerOutcomeFlags).some(v => v)) return true;
+    if (showContactByStatus && !finalStatus.trim()) return true;
     return false;
-  }, [showCustomField, customFieldSearch, showEventType, eventTypes, showOutcomes, outcomes, showOutcomeFlags, triggerOutcomeFlags]);
+  }, [showCustomField, customFieldSearch, showEventType, eventTypes, showOutcomes, outcomes, showOutcomeFlags, triggerOutcomeFlags, showContactByStatus, finalStatus]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -197,6 +207,19 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
         key: "trigger_when_outcome_is",
         value: Object.keys(triggerOutcomeFlags).filter((k) => triggerOutcomeFlags[k]),
       });
+    }
+    
+    // Add Contact by Status fields
+    if (showContactByStatus) {
+      if (finalStatus) {
+        properties.push({ key: "Final Status", value: finalStatus });
+      }
+      if (waitSeconds) {
+        properties.push({ key: "Wait Seconds", value: waitSeconds });
+      }
+      if (sendLastActiveStatus) {
+        properties.push({ key: "Send Last Active Status", value: sendLastActiveStatus });
+      }
     }
     
     // Add filters
@@ -228,6 +251,11 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
         outcomes,
         eventTypes,
         triggerOutcomeFlags,
+        ...(showContactByStatus ? {
+          finalStatus,
+          waitSeconds: waitSeconds ? parseInt(waitSeconds, 10) : undefined,
+          sendLastActiveStatus,
+        } : {}),
         ...(showFilters ? { filters: rows.filter(r => r.type).map(r => ({
           type: r.type,
           textValue: r.textValue || "",
@@ -424,6 +452,65 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
             <p className="text-sm text-gray-500">
               Trigger when an outcome is added to a new call or existing outcome of the call is updated.
             </p>
+          </div>
+        )}
+
+        {showContactByStatus && (
+          <div className="space-y-4">
+            {/* Final Status */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span>Final Status</span>
+                <span className="text-red-500">*</span>
+              </label>
+              <Select value={finalStatus} onValueChange={setFinalStatus}>
+                <SelectTrigger className="w-full bg-white border-gray-300">
+                  <SelectValue placeholder="Select final status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="POTENTIAL">Potential</SelectItem>
+                  <SelectItem value="STRATEGY_CALL_BOOKED">Strategy Call Booked</SelectItem>
+                  <SelectItem value="DISQUALIFIED">Disqualified</SelectItem>
+                  <SelectItem value="QUALIFIED">Qualified</SelectItem>
+                  <SelectItem value="DISCOVERY_CALL_BOOKED">Discovery Call Booked</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Wait for X Seconds */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span>Wait for X Seconds</span>
+              </label>
+              <Input
+                type="number"
+                placeholder="Enter seconds"
+                value={waitSeconds}
+                onChange={(e) => setWaitSeconds(e.target.value)}
+                className="w-full bg-white"
+              />
+              <p className="text-xs text-gray-500">Time for contact to reach final status</p>
+            </div>
+
+            {/* Send Last Active Status */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <span>Send Last Active Status?</span>
+              </label>
+              <Select value={sendLastActiveStatus} onValueChange={setSendLastActiveStatus}>
+                <SelectTrigger className="w-full bg-white border-gray-300">
+                  <SelectValue placeholder="Select option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">Send last active status, if contact left before reaching Final Status</p>
+            </div>
           </div>
         )}
 
