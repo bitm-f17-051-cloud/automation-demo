@@ -57,14 +57,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -119,13 +123,13 @@ const ContactUpdatedTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => 
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const setRowType = (rowId: string, type: FilterType) =>
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, values: [], textValue: "", comparisonOperator: "Is" } : r)));
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, values: [], textValue: "", comparisonOperator: "is equal to" } : r)));
   
   const toggleRowValue = (rowId: string, value: string) =>
     setRows((prev) =>
@@ -153,7 +157,7 @@ const ContactUpdatedTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => 
   const removeRow = (rowId: string) =>
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
   
-  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" }]);
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" }]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -335,8 +339,8 @@ const ContactUpdatedTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => 
                                 </Select>
                               </div>
                               
-                              {/* Only show text input if comparison is not "Is empty" or "Is not empty" */}
-                              {row.comparisonOperator !== "Is empty" && row.comparisonOperator !== "Is not empty" && (
+                              {/* Only show text input if comparison is not empty/exists operators */}
+                              {row.comparisonOperator !== "is empty" && row.comparisonOperator !== "is not empty" && row.comparisonOperator !== "exists" && row.comparisonOperator !== "does not exist" && (
                                 <div className="space-y-2">
                                   <label className="text-sm font-medium text-gray-700">Value</label>
                                   <Input

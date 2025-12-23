@@ -30,6 +30,10 @@ const WAIT_TYPES = {
   WAIT_FOR_REPLY: {
     label: "Wait for reply",
     description: "Wait until a contact replies to a message"
+  },
+  UNTIL_BEFORE_EVENT: {
+    label: "Until Before Event",
+    description: "Wait until a specified number of hours before an event"
   }
 } as const;
 
@@ -65,6 +69,11 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
     nodeData?.nodeData?.replyWaitDurationUnit || "hours"
   );
 
+  // Until Before Event - hours before event
+  const [hoursBeforeEvent, setHoursBeforeEvent] = useState<number>(
+    nodeData?.nodeData?.hoursBeforeEvent || 1
+  );
+
   // Check if form is valid
   const [isSaveDisabled, setIsSaveDisabled] = useState(true);
 
@@ -77,10 +86,12 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
       isValid = Boolean(selectedDate) && Boolean(selectedTime);
     } else if (waitType === "WAIT_FOR_REPLY") {
       isValid = replyWaitDuration > 0 && Boolean(replyWaitDurationUnit);
+    } else if (waitType === "UNTIL_BEFORE_EVENT") {
+      isValid = hoursBeforeEvent > 0;
     }
 
     setIsSaveDisabled(!isValid);
-  }, [waitType, duration, durationUnit, selectedDate, selectedTime, replyWaitDuration, replyWaitDurationUnit]);
+  }, [waitType, duration, durationUnit, selectedDate, selectedTime, replyWaitDuration, replyWaitDurationUnit, hoursBeforeEvent]);
 
   const saveAction = () => {
     if (!selectedNodeId || !waitType) return;
@@ -95,6 +106,8 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
         generatedDescription = `Wait until ${selectedDate?.toLocaleDateString()} at ${formatTo12Hour(selectedTime)}`;
       } else if (waitType === "WAIT_FOR_REPLY") {
         generatedDescription = `Wait for reply (max ${replyWaitDuration} ${replyWaitDurationUnit})`;
+      } else if (waitType === "UNTIL_BEFORE_EVENT") {
+        generatedDescription = `Wait until ${hoursBeforeEvent} ${hoursBeforeEvent === 1 ? 'hour' : 'hours'} before event`;
       }
     }
 
@@ -111,6 +124,7 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
         time: selectedTime,
         replyWaitDuration: waitType === "WAIT_FOR_REPLY" ? replyWaitDuration : undefined,
         replyWaitDurationUnit: waitType === "WAIT_FOR_REPLY" ? replyWaitDurationUnit : undefined,
+        hoursBeforeEvent: waitType === "UNTIL_BEFORE_EVENT" ? hoursBeforeEvent : undefined,
       },
       properties: [],
     };
@@ -220,6 +234,23 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
                     </div>
                     <div className="text-xs text-gray-500">
                       {WAIT_TYPES.WAIT_FOR_REPLY.description}
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWaitType("UNTIL_BEFORE_EVENT");
+                      setIsWaitTypeOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${
+                      waitType === "UNTIL_BEFORE_EVENT" ? "bg-blue-50" : ""
+                    }`}
+                  >
+                    <div className="text-sm font-semibold text-gray-900 mb-1">
+                      {WAIT_TYPES.UNTIL_BEFORE_EVENT.label}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {WAIT_TYPES.UNTIL_BEFORE_EVENT.description}
                     </div>
                   </button>
                 </div>
@@ -340,6 +371,38 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
               {replyWaitDuration > 0 && (
                 <p className="text-xs text-gray-500 mt-2">
                   Will wait for reply up to {replyWaitDuration} {replyWaitDurationUnit}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Until Before Event Configuration */}
+          {waitType === "UNTIL_BEFORE_EVENT" && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">Time Before Event</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  placeholder="Enter hours"
+                  value={hoursBeforeEvent}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value > 0) {
+                      setHoursBeforeEvent(value);
+                    }
+                  }}
+                  className="w-1/2 bg-white"
+                />
+                <div className="w-1/2 flex items-center">
+                  <span className="text-sm text-gray-600">
+                    {hoursBeforeEvent === 1 ? 'hour' : 'hours'}
+                  </span>
+                </div>
+              </div>
+              {hoursBeforeEvent > 0 && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Will wait until {hoursBeforeEvent} {hoursBeforeEvent === 1 ? 'hour' : 'hours'} before the event
                 </p>
               )}
             </div>

@@ -12,23 +12,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon, RefreshCw, ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
-
-// Dummy team members data
-const DUMMY_TEAM_MEMBERS = [
-  { id: "user_1", name: "Alex Thompson", email: "alex.thompson@example.com" },
-  { id: "user_2", name: "Maria Garcia", email: "maria.garcia@example.com" },
-  { id: "user_3", name: "James Miller", email: "james.miller@example.com" },
-  { id: "user_4", name: "Sophia Martinez", email: "sophia.martinez@example.com" },
-  { id: "user_5", name: "William Taylor", email: "william.taylor@example.com" },
-  { id: "user_6", name: "Olivia Anderson", email: "olivia.anderson@example.com" },
-  { id: "user_7", name: "Michael Jackson", email: "michael.jackson@example.com" },
-  { id: "user_8", name: "Emma White", email: "emma.white@example.com" },
-];
+import { useUsers } from "@/hooks/queries";
+import Image from "next/image";
 
 type Props = {
   goBack: () => void;
@@ -37,6 +26,7 @@ type Props = {
 
 const AssignChatAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
+  const { data: users } = useUsers();
 
   const [actionName, setActionName] = useState(nodeData?.nodeName || "Assign a chat");
   const [conversationId, setConversationId] = useState(nodeData?.nodeData?.conversationId || "");
@@ -57,7 +47,7 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
       nodeIcon: "add_update_fields",
       nodeDescription: selectionType === "round_robin" 
         ? `Assign chat ${conversationId} (round robin)`
-        : `Assign chat ${conversationId} to ${assignTo}`,
+        : `Assign chat ${conversationId} to ${users?.find(u => u.id.toString() === assignTo)?.firstName} ${users?.find(u => u.id.toString() === assignTo)?.lastName}`,
       nodeData: {
         conversationId,
         selectionType,
@@ -68,8 +58,19 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
         { key: "Conversation ID", value: conversationId },
         { key: "Selection Type", value: selectionType === "round_robin" ? "Round Robin" : "Specific Assignee" },
         ...(selectionType === "round_robin" 
-          ? [{ key: "Assignees", value: selectedAssignees.join(", ") }]
-          : [{ key: "Assign To", value: assignTo }]
+          ? [{ 
+              key: "Assignees", 
+              value: selectedAssignees.map(id => {
+                const user = users?.find(u => u.id.toString() === id);
+                return user ? `${user.firstName} ${user.lastName}` : id;
+              }).join(", ")
+            }]
+          : [{ 
+              key: "Assign To", 
+              value: users?.find(u => u.id.toString() === assignTo) 
+                ? `${users.find(u => u.id.toString() === assignTo)!.firstName} ${users.find(u => u.id.toString() === assignTo)!.lastName}`
+                : assignTo
+            }]
         ),
       ],
     };
@@ -173,31 +174,48 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
                 <PopoverContent className="p-0 w-full">
                   <div className="p-2">
                     <div className="max-h-48 overflow-y-auto">
-                      {DUMMY_TEAM_MEMBERS.map((member) => (
+                      {users && users.map((user) => (
                         <div
-                          key={member.id}
+                          key={user.id}
                           className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
                           onClick={() => {
-                            if (selectedAssignees.includes(member.id)) {
-                              setSelectedAssignees(selectedAssignees.filter(id => id !== member.id));
+                            const userId = user.id.toString();
+                            if (selectedAssignees.includes(userId)) {
+                              setSelectedAssignees(selectedAssignees.filter(id => id !== userId));
                             } else {
-                              setSelectedAssignees([...selectedAssignees, member.id]);
+                              setSelectedAssignees([...selectedAssignees, userId]);
                             }
                           }}
                         >
                           <Checkbox
-                            checked={selectedAssignees.includes(member.id)}
+                            checked={selectedAssignees.includes(user.id.toString())}
                             onCheckedChange={(checked) => {
+                              const userId = user.id.toString();
                               if (checked) {
-                                setSelectedAssignees([...selectedAssignees, member.id]);
+                                setSelectedAssignees([...selectedAssignees, userId]);
                               } else {
-                                setSelectedAssignees(selectedAssignees.filter(id => id !== member.id));
+                                setSelectedAssignees(selectedAssignees.filter(id => id !== userId));
                               }
                             }}
                           />
-                          <div className="flex items-center gap-2">
-                            <span>{member.name}</span>
-                            <span className="text-xs text-gray-500">({member.email})</span>
+                          <div className="flex items-center gap-2 flex-1">
+                            {user.signedUrl && (
+                              <Image 
+                                height={20} 
+                                width={20} 
+                                src={user.signedUrl} 
+                                alt={user.firstName} 
+                                className="w-5 h-5 rounded-full object-cover" 
+                              />
+                            )}
+                            <span className="text-sm font-medium text-gray-900">
+                              {user.firstName} {user.lastName}
+                            </span>
+                            {user.UserRoles?.[0]?.role && (
+                              <span className="text-[13px] font-medium text-gray-900 ml-auto border border-gray-200 rounded-md px-1.5 h-5 bg-gray-100">
+                                {user.UserRoles[0].role.name}
+                              </span>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -213,14 +231,38 @@ const AssignChatAction = ({ goBack, nodeData }: Props) => {
                 Assign To
                 <span className="text-red-500">*</span>
               </label>
-              <SelectWithVariablePanel
-                value={assignTo}
-                onValueChange={setAssignTo}
-                placeholder="Select team member"
-                className="w-full h-12"
-                displayValue={assignTo ? DUMMY_TEAM_MEMBERS.find(m => m.id === assignTo)?.name : undefined}
-                triggerContent={<RefreshCw className="w-4 h-4 text-gray-400" />}
-              />
+              <Select value={assignTo} onValueChange={setAssignTo}>
+                <SelectTrigger className="w-full h-12">
+                  <SelectValue placeholder="Select team member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {users && users.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-1.5">
+                          {user.signedUrl && (
+                            <Image 
+                              height={20} 
+                              width={20} 
+                              src={user.signedUrl} 
+                              alt={user.firstName} 
+                              className="w-5 h-5 rounded-full object-cover" 
+                            />
+                          )}
+                          <span className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </span>
+                        </div>
+                        {user.UserRoles?.[0]?.role && (
+                          <div className="h-5 px-1.5 bg-gray-100 border border-gray-200 rounded-[6px] text-[13px] font-medium text-gray-900 ml-2">
+                            {user.UserRoles[0].role.name}
+                          </div>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
         </div>

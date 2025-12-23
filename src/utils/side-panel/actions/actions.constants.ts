@@ -231,11 +231,15 @@ export const WAIT_CONDITIONS = {
   },
   COMMUNICATIONS_BASED: {
     label: 'Communications based',
-    description: 'Wait until a contact’s interaction meets certain conditions'
+    description: "Wait until a contact's interaction meets certain conditions"
   },
   CUSTOM_FIELD_MATCH: {
     label: 'Until a custom date field matches',
     description: 'e.g. Until 5 days before the webinar_date'
+  },
+  UNTIL_BEFORE_EVENT: {
+    label: 'Until Before Event',
+    description: 'Wait until a specified number of hours before an event'
   }
 } as const;
 

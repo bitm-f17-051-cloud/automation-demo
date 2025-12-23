@@ -15,14 +15,18 @@ type IfElseActionProps = {
 };
 
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 // Trigger Output Fields - Nested structure
@@ -121,7 +125,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
         label: "If",
         segments: [{ 
           id: "segment-1", 
-          filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "Is", operator: "AND" }] 
+          filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "is equal to", operator: "AND" }] 
         }]
       },
       { 
@@ -151,7 +155,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
       label: "Else If",
       segments: [{ 
         id: `segment-${Date.now()}`, 
-        filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "Is", operator: "AND" }] 
+        filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "is equal to", operator: "AND" }] 
       }]
     };
     
@@ -182,7 +186,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
           ...b,
           segments: [...b.segments, {
             id: `segment-${Date.now()}`,
-            filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "Is", operator: "AND" }]
+            filters: [{ id: Math.random().toString(), type: "", comparisonOperator: "is equal to", operator: "AND" }]
           }]
         };
       }
@@ -215,7 +219,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
                 filters: [...s.filters, { 
                   id: Math.random().toString(), 
                   type: "", 
-                  comparisonOperator: "Is",
+                  comparisonOperator: "is equal to",
                   operator: "AND"
                 }]
               };
@@ -501,7 +505,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
                                       onValueChange={(val) => updateFilter(safeBranch.id, safeSegment.id, filter.id, {
                                         type: val as FilterType,
                                         textValue: "",
-                                        comparisonOperator: "Is"
+                                        comparisonOperator: "is equal to"
                                       })}
                                       placeholder="Select filter type"
                                       className="w-full bg-white border-gray-300"
@@ -510,7 +514,7 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
                                         {/* Comparison Operator */}
                                         {filter.type && (
                                       <Select
-                                        value={filter.comparisonOperator || "Is"}
+                                        value={filter.comparisonOperator || "is equal to"}
                                             onValueChange={(val) => updateFilter(safeBranch.id, safeSegment.id, filter.id, {
                                           comparisonOperator: val as typeof COMPARISON_OPERATORS[number]
                                         })}
@@ -528,8 +532,10 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
 
                                         {/* Filter Value Input */}
                                     {filter.type && 
-                                     filter.comparisonOperator !== "Is empty" && 
-                                     filter.comparisonOperator !== "Is not empty" && (
+                                     filter.comparisonOperator !== "is empty" && 
+                                     filter.comparisonOperator !== "is not empty" && 
+                                     filter.comparisonOperator !== "exists" && 
+                                     filter.comparisonOperator !== "does not exist" && (
                                       <Input
                                             type="text"
                                         placeholder={

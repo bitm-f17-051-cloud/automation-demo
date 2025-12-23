@@ -55,14 +55,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -94,18 +98,18 @@ const SimpleTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
           id: uuidv4(),
           type: filter.type,
           textValue: filter.textValue || "",
-          comparisonOperator: filter.comparisonOperator || "Is",
+          comparisonOperator: filter.comparisonOperator || "is equal to",
           operator: filter.operator || "AND"
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const setRowType = (rowId: string, type: FilterType) =>
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "Is" } : r)));
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "is equal to" } : r)));
   
   const setRowTextValue = (rowId: string, textValue: string) =>
     setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, textValue } : r)));
@@ -119,7 +123,7 @@ const SimpleTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
   const removeRow = (rowId: string) =>
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
   
-  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", operator: "AND", comparisonOperator: "Is" }]);
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", operator: "AND", comparisonOperator: "is equal to" }]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -130,7 +134,7 @@ const SimpleTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
     const filters = rows.filter(r => r.type).map(r => ({
       type: r.type,
       textValue: r.textValue || "",
-      comparisonOperator: r.comparisonOperator || "Is",
+      comparisonOperator: r.comparisonOperator || "is equal to",
       operator: r.operator || "AND"
     }));
 
@@ -235,7 +239,7 @@ const SimpleTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
                           {/* Comparison Operator */}
                           {row.type && (
                             <Select 
-                              value={row.comparisonOperator || "Is"} 
+                              value={row.comparisonOperator || "is equal to"} 
                               onValueChange={(value) => setRowComparisonOperator(row.id, value as typeof COMPARISON_OPERATORS[number])}
                             >
                               <SelectTrigger className="w-full bg-white border-gray-300">
@@ -250,7 +254,7 @@ const SimpleTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
                           )}
 
                           {/* Filter Value Input */}
-                          {row.type && row.comparisonOperator !== "Is empty" && row.comparisonOperator !== "Is not empty" && (
+                          {row.type && row.comparisonOperator !== "is empty" && row.comparisonOperator !== "is not empty" && row.comparisonOperator !== "exists" && row.comparisonOperator !== "does not exist" && (
                             <Input
                               type="text"
                               placeholder={

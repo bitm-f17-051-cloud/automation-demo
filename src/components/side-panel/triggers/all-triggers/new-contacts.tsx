@@ -56,14 +56,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty",
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with",
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -108,7 +112,7 @@ const NewContactsTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
         type: "",
         values: [],
         operator: "AND",
-        comparisonOperator: "Is",
+        comparisonOperator: "is equal to",
       });
     return rows;
   })();
@@ -118,7 +122,7 @@ const NewContactsTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
     setRows((prev) =>
       prev.map((r) =>
         r.id === rowId
-          ? { ...r, type, values: [], textValue: "", comparisonOperator: "Is" }
+          ? { ...r, type, values: [], textValue: "", comparisonOperator: "is equal to" }
           : r
       )
     );
@@ -168,7 +172,7 @@ const NewContactsTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
         type: "",
         values: [],
         operator: "AND",
-        comparisonOperator: "Is",
+        comparisonOperator: "is equal to",
       },
     ]);
 
@@ -312,8 +316,10 @@ const NewContactsTrigger = ({ goBack, nodeData, selectedTrigger }: Props) => {
 
                       {/* Filter Value Input - Full Width on New Row */}
                       {row.type &&
-                        row.comparisonOperator !== "Is empty" &&
-                        row.comparisonOperator !== "Is not empty" && (
+                        row.comparisonOperator !== "is empty" &&
+                        row.comparisonOperator !== "is not empty" && 
+                        row.comparisonOperator !== "exists" && 
+                        row.comparisonOperator !== "does not exist" && (
                           <Input
                             placeholder="Write option"
                             className="w-full h-11 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"

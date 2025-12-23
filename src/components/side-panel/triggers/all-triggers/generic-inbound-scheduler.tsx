@@ -57,14 +57,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -122,13 +126,13 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const setRowType = (rowId: string, type: FilterType) =>
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "Is" } : r)));
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "is equal to" } : r)));
   
   const setRowTextValue = (rowId: string, textValue: string) =>
     setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, textValue } : r)));
@@ -142,7 +146,7 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
   const removeRow = (rowId: string) =>
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
   
-  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", operator: "AND", comparisonOperator: "Is" }]);
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", operator: "AND", comparisonOperator: "is equal to" }]);
 
   useEffect(() => {
     if (nodeData) {
@@ -590,7 +594,7 @@ const GenericInboundSchedulerTrigger = ({ goBack, nodeData, selectedTrigger }: P
                         )}
 
                         {/* Filter Value Input */}
-                        {row.type && row.comparisonOperator !== "Is empty" && row.comparisonOperator !== "Is not empty" && (
+                        {row.type && row.comparisonOperator !== "is empty" && row.comparisonOperator !== "is not empty" && row.comparisonOperator !== "exists" && row.comparisonOperator !== "does not exist" && (
                           <Input
                             type="text"
                             placeholder={

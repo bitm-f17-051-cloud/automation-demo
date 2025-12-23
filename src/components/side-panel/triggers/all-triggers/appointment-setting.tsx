@@ -56,14 +56,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -106,13 +110,13 @@ const AppointmentSettingTrigger = ({ goBack, nodeData }: Props) => {
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const addRow = () => {
-    setRows([...rows, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" }]);
+    setRows([...rows, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" }]);
   };
 
   const removeRow = (id: string) => {
@@ -123,7 +127,7 @@ const AppointmentSettingTrigger = ({ goBack, nodeData }: Props) => {
   const setRowType = (id: string, newType: FilterType) => {
     setRows(rows.map(row => {
       if (row.id === id) {
-        return { ...row, type: newType, values: [], textValue: "", comparisonOperator: "Is" };
+        return { ...row, type: newType, values: [], textValue: "", comparisonOperator: "is equal to" };
       }
       return row;
     }));
@@ -213,7 +217,7 @@ const AppointmentSettingTrigger = ({ goBack, nodeData }: Props) => {
 
   const renderOptions = (row: FilterRow) => {
     // All fields are text fields with comparison operators
-    const hideTextInput = row.comparisonOperator === "Is empty" || row.comparisonOperator === "Is not empty";
+    const hideTextInput = row.comparisonOperator === "is empty" || row.comparisonOperator === "is not empty" || row.comparisonOperator === "exists" || row.comparisonOperator === "does not exist";
     
     return (
       <div className="space-y-3">

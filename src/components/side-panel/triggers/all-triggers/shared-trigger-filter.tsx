@@ -58,14 +58,18 @@ const TRIGGER_OUTPUT_FIELDS = [
 
 // Text field comparison operators
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 type FilterType = typeof TRIGGER_OUTPUT_FIELDS[number]["value"] | "";
@@ -107,18 +111,18 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
           type: filter.type,
           values: filter.values || [],
           textValue: filter.textValue || "",
-          comparisonOperator: filter.comparisonOperator || "Is",
+          comparisonOperator: filter.comparisonOperator || "is equal to",
           operator: filter.operator || "AND"
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const setRowType = (rowId: string, type: FilterType) =>
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, values: [], textValue: "", comparisonOperator: "Is" } : r)));
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, values: [], textValue: "", comparisonOperator: "is equal to" } : r)));
   
   const toggleRowValue = (rowId: string, value: string) =>
     setRows((prev) =>
@@ -146,7 +150,7 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
   const removeRow = (rowId: string) =>
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
   
-  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "Is" }]);
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", values: [], operator: "AND", comparisonOperator: "is equal to" }]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -168,7 +172,7 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
       type: r.type,
       values: r.values,
       textValue: r.textValue || "",
-      comparisonOperator: r.comparisonOperator || "Is",
+      comparisonOperator: r.comparisonOperator || "is equal to",
       operator: r.operator || "AND"
     }));
 
@@ -305,10 +309,10 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
 
                         {row.type && (
                           <Select 
-                            value={row.comparisonOperator || "Is"} 
+                            value={row.comparisonOperator || "is equal to"} 
                             onValueChange={(value) => setRowComparisonOperator(row.id, value as typeof COMPARISON_OPERATORS[number])}
                           >
-                            <SelectTrigger className="w-[180px] h-11 bg-white border-gray-300 text-gray-900">
+                            <SelectTrigger className="w-[200px] h-11 bg-white border-gray-300 text-gray-900">
                               <SelectValue className="text-gray-900" />
                             </SelectTrigger>
                             <SelectContent className="max-h-[300px]">
@@ -332,7 +336,7 @@ const SharedTriggerFilter = ({ goBack, nodeData, triggerValue, triggerLabel, tri
                       </div>
 
                       {/* Filter Value Input - Full Width on New Row */}
-                      {row.type && row.comparisonOperator !== "Is empty" && row.comparisonOperator !== "Is not empty" && (
+                      {row.type && row.comparisonOperator !== "is empty" && row.comparisonOperator !== "is not empty" && row.comparisonOperator !== "exists" && row.comparisonOperator !== "does not exist" && (
                         <Input
                           placeholder="Write option"
                           className="w-full h-11 bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"

@@ -60,6 +60,9 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
   const [selectedEventBasedCondition, setSelectedEventBasedCondition] =
     useState<keyof typeof WAIT_EVENT_BASED_CONDITIONS | null>(null);
 
+  // Until Before Event state
+  const [hoursBeforeEvent, setHoursBeforeEvent] = useState<number>(1);
+
   const [isSavedDisabled, setIsSavedDisabled] = useState(true);
 
   useEffect(() => {
@@ -89,6 +92,13 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
       isValid = Boolean(date);
     }
 
+    if (
+      selectedCondition &&
+      WAIT_CONDITIONS[selectedCondition] === WAIT_CONDITIONS.UNTIL_BEFORE_EVENT
+    ) {
+      isValid = hoursBeforeEvent > 0;
+    }
+
     setIsSavedDisabled(!isValid);
   }, [
     selectedCondition,
@@ -96,6 +106,7 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
     waitForUnit,
     selectedEventBasedCondition,
     date,
+    hoursBeforeEvent,
   ]);
   // Setting the values from the node data
   useEffect(() => {
@@ -126,6 +137,9 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
       const savedTime = getValueFromKeyValue("Specific time", nodeData);
       setDate(savedDate ? new Date(savedDate) : undefined);
       setTime(savedTime || "09:00:00");
+
+      const savedHoursBeforeEvent = getValueFromKeyValue("Hours before event", nodeData);
+      setHoursBeforeEvent(savedHoursBeforeEvent !== undefined ? Number(savedHoursBeforeEvent) : 1);
     }
   }, [selectedNodeId, nodeData]);
 
@@ -144,6 +158,7 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
         eventBasedCondition: selectedEventBasedCondition,
         date,
         time: selectedCondition && WAIT_CONDITIONS[selectedCondition] === WAIT_CONDITIONS.SPECIFIC_DATE_TIME ? time : null,
+        hoursBeforeEvent: selectedCondition && WAIT_CONDITIONS[selectedCondition] === WAIT_CONDITIONS.UNTIL_BEFORE_EVENT ? hoursBeforeEvent : undefined,
       }
     };
 
@@ -177,6 +192,13 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
           ]
         }`;
       }
+    }
+
+    if (
+      selectedCondition &&
+      WAIT_CONDITIONS[selectedCondition] === WAIT_CONDITIONS.UNTIL_BEFORE_EVENT
+    ) {
+      config.nodeDescription = `Wait until ${hoursBeforeEvent} ${hoursBeforeEvent === 1 ? 'hour' : 'hours'} before event`;
     }
 
     updateNodeConfig(selectedNodeId, config, nodeData ? false : true);
@@ -409,6 +431,37 @@ const WaitAction = ({ nodeData, goBack }: WaitActionProps) => {
                   </Select>
                 </div>
               )}
+            </div>
+          )}
+
+        {selectedCondition &&
+          WAIT_CONDITIONS[selectedCondition] ===
+            WAIT_CONDITIONS.UNTIL_BEFORE_EVENT && (
+            <div className="flex flex-col gap-1.5">
+              <h4 className="text-sm font-medium text-gray-900">Time before event</h4>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  type="number"
+                  placeholder="Enter hours"
+                  className="w-1/2"
+                  min="1"
+                  value={hoursBeforeEvent}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    if (value > 0) {
+                      setHoursBeforeEvent(value);
+                    }
+                  }}
+                />
+                <div className="w-1/2 flex items-center">
+                  <span className="text-sm text-gray-600">
+                    {hoursBeforeEvent === 1 ? 'hour' : 'hours'}
+                  </span>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Select how many hours before the event to wait
+              </p>
             </div>
           )}
       </div>

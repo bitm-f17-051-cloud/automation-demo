@@ -12,14 +12,18 @@ import { useWorkflowStore } from "@/store/workflow.store";
 import { v4 as uuidv4 } from "uuid";
 
 const COMPARISON_OPERATORS = [
-  "Is",
-  "Is not",
-  "Contains",
-  "Does not contain",
-  "Is any of (comma separated)",
-  "Is none of (comma separated)",
-  "Is not empty",
-  "Is empty"
+  "exists",
+  "does not exist",
+  "is empty",
+  "is not empty",
+  "is equal to",
+  "is not equal to",
+  "contains",
+  "does not contain",
+  "starts with",
+  "does not start with",
+  "ends with",
+  "does not end with"
 ] as const;
 
 // Trigger Output Fields - Nested structure
@@ -84,18 +88,18 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
           id: uuidv4(),
           type: filter.type,
           textValue: filter.textValue || "",
-          comparisonOperator: filter.comparisonOperator || "Is",
+          comparisonOperator: filter.comparisonOperator || "is equal to",
           operator: filter.operator || "AND"
         });
       });
     }
-    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", textValue: "", operator: "AND", comparisonOperator: "Is" });
+    if (rows.length === 0) rows.push({ id: uuidv4(), type: "", textValue: "", operator: "AND", comparisonOperator: "is equal to" });
     return rows;
   })();
   const [rows, setRows] = useState<FilterRow[]>(bootstrapRows);
 
   const setRowType = (rowId: string, type: FilterType) =>
-    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "Is" } : r)));
+    setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, type, textValue: "", comparisonOperator: "is equal to" } : r)));
   
   const setRowTextValue = (rowId: string, textValue: string) =>
     setRows((prev) => prev.map((r) => (r.id === rowId ? { ...r, textValue } : r)));
@@ -109,7 +113,7 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
   const removeRow = (rowId: string) =>
     setRows((prev) => (prev.length > 1 ? prev.filter((r) => r.id !== rowId) : prev));
   
-  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", textValue: "", operator: "AND", comparisonOperator: "Is" }]);
+  const addRow = () => setRows((prev) => [...prev, { id: uuidv4(), type: "", textValue: "", operator: "AND", comparisonOperator: "is equal to" }]);
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -117,7 +121,7 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
     const filters = rows.filter(r => r.type).map(r => ({
       type: r.type,
       textValue: r.textValue || "",
-      comparisonOperator: r.comparisonOperator || "Is",
+      comparisonOperator: r.comparisonOperator || "is equal to",
       operator: r.operator || "AND"
     }));
 
@@ -188,16 +192,15 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
           <Separator />
 
           {/* Filters Section */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-base font-semibold text-gray-900">Filters</h4>
-              <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-gray-600 bg-gray-100 rounded">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm font-medium text-gray-900">Filters</h4>
+              <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded">
                 {rows.length}
               </span>
             </div>
-            <p className="text-sm text-gray-500 -mt-1">Specify filter conditions</p>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {rows.map((row, index) => {
                 return (
                   <div key={row.id} className="space-y-3">
@@ -205,7 +208,7 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
                     {index > 0 && (
                       <div className="flex items-center gap-2">
                         <Select value={row.operator || "AND"} onValueChange={(value: "AND" | "OR") => setRowOperator(row.id, value)}>
-                          <SelectTrigger className="h-9 w-32 bg-white border-gray-300">
+                          <SelectTrigger className="h-9 w-24 bg-white border-gray-300 text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -216,44 +219,29 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
                       </div>
                     )}
                     
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-                      {/* Filter Type + Comparison Operator Row */}
-                      <div className="flex items-center gap-3">
-                        <SelectWithFilterPanel
-                          value={row.type}
-                          onValueChange={(value) => setRowType(row.id, value as FilterType)}
-                          placeholder="Select filter"
-                          className="flex-1 bg-white border-gray-300"
-                        />
+                    {/* Filter Row - Field and Operator in same row */}
+                    <div className="flex items-start gap-3">
+                      <SelectWithFilterPanel
+                        value={row.type}
+                        onValueChange={(value) => setRowType(row.id, value as FilterType)}
+                        placeholder="Select filter"
+                        className="flex-1 h-11 bg-white border-gray-300"
+                      />
 
-                        {row.type && (
-                          <Select
-                            value={row.comparisonOperator || "Is"}
-                            onValueChange={(val) => setRowComparisonOperator(row.id, val as typeof COMPARISON_OPERATORS[number])}
-                          >
-                            <SelectTrigger className="w-40 h-11 bg-white border-gray-300">
-                              <SelectValue placeholder="Select operator" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {COMPARISON_OPERATORS.map((op) => (
-                                <SelectItem key={op} value={op}>{op}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      </div>
-
-                      {/* Filter Value Input */}
                       {row.type && (
-                        <div className="space-y-2">
-                          <Input
-                            type="text"
-                            placeholder="Enter value"
-                            value={row.textValue || ""}
-                            onChange={(e) => setRowTextValue(row.id, e.target.value)}
-                            className="w-full bg-white"
-                          />
-                        </div>
+                        <Select
+                          value={row.comparisonOperator || "is equal to"}
+                          onValueChange={(val) => setRowComparisonOperator(row.id, val as typeof COMPARISON_OPERATORS[number])}
+                        >
+                          <SelectTrigger className="w-[200px] h-11 bg-white border-gray-300">
+                            <SelectValue placeholder="Select operator" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COMPARISON_OPERATORS.map((op) => (
+                              <SelectItem key={op} value={op}>{op}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
 
                       {/* Remove Button */}
@@ -261,13 +249,24 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
                         <button
                           type="button"
                           onClick={() => removeRow(row.id)}
-                          className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700"
+                          className="w-11 h-11 flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                          title="Remove filter"
                         >
                           <Trash2 className="w-4 h-4" />
-                          Remove filter
                         </button>
                       )}
                     </div>
+
+                    {/* Filter Value Input - Separate row below */}
+                    {row.type && row.comparisonOperator !== "is empty" && row.comparisonOperator !== "is not empty" && row.comparisonOperator !== "exists" && row.comparisonOperator !== "does not exist" && (
+                      <Input
+                        type="text"
+                        placeholder="Enter value"
+                        value={row.textValue || ""}
+                        onChange={(e) => setRowTextValue(row.id, e.target.value)}
+                        className="w-full h-11 bg-white border-gray-300"
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -277,10 +276,10 @@ const FilterAction = ({ goBack, nodeData }: FilterActionProps) => {
             <button
               type="button"
               onClick={addRow}
-              className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 border border-dashed border-gray-300 rounded-md text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add Another Filter
+              Add filter
             </button>
           </div>
         </div>
