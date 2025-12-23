@@ -372,9 +372,9 @@ const IfElseAction = ({ goBack, nodeData, selectedAction }: IfElseActionProps) =
         <div className="space-y-6">
           {/* Action Name */}
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-2 block">If/Else Name</Label>
+            <Label className="text-sm font-medium text-gray-700 mb-2 block">Action Name</Label>
             <Input
-              placeholder="Enter if/else name"
+              placeholder="Enter action name"
               value={actionName}
               onChange={(e) => setActionName(e.target.value)}
               className="w-full"

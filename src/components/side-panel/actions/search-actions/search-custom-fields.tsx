@@ -23,7 +23,7 @@ type Props = {
 const SearchCustomFieldsAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
-  const [actionName, setActionName] = useState(nodeData?.nodeName || "Search Custom Fields");
+  const [actionName, setActionName] = useState(nodeData?.nodeName || "Search Fields");
   const [name, setName] = useState(nodeData?.nodeData?.name || "");
   const [inputType, setInputType] = useState(nodeData?.nodeData?.inputType || "");
 
@@ -56,7 +56,7 @@ const SearchCustomFieldsAction = ({ goBack, nodeData }: Props) => {
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-gray-900">Search Custom Fields</h2>
+          <h2 className="text-base font-semibold text-gray-900">Search Fields</h2>
           <button
             onClick={goBack}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -64,7 +64,7 @@ const SearchCustomFieldsAction = ({ goBack, nodeData }: Props) => {
             <XIcon className="w-5 h-5 text-gray-500" />
           </button>
         </div>
-        <p className="text-sm text-gray-500">Search Custom fields by name and type.</p>
+        <p className="text-sm text-gray-500">Search fields by name and type.</p>
       </div>
 
       {/* Scrollable Content */}

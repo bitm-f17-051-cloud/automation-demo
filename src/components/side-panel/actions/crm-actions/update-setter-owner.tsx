@@ -5,42 +5,8 @@ import { DynamicInput } from "@/components/ui/dynamic-input";
 import PrimaryButton from "@/components/ui/primary-button";
 import { Separator } from "@/components/ui/separator";
 import { useWorkflowStore } from "@/store/workflow.store";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
-import { ChevronRight, XIcon, RefreshCw, ChevronDownIcon } from "lucide-react";
+import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
-
-// Dummy contacts data
-const DUMMY_CONTACTS = [
-  { id: "contact_1", name: "John Doe", email: "john.doe@example.com" },
-  { id: "contact_2", name: "Jane Smith", email: "jane.smith@example.com" },
-  { id: "contact_3", name: "Mike Johnson", email: "mike.johnson@example.com" },
-  { id: "contact_4", name: "Sarah Williams", email: "sarah.williams@example.com" },
-  { id: "contact_5", name: "David Brown", email: "david.brown@example.com" },
-  { id: "contact_6", name: "Emily Davis", email: "emily.davis@example.com" },
-  { id: "contact_7", name: "Robert Wilson", email: "robert.wilson@example.com" },
-  { id: "contact_8", name: "Lisa Anderson", email: "lisa.anderson@example.com" },
-];
-
-// Dummy setter owners data
-const DUMMY_SETTER_OWNERS = [
-  { id: "setter_1", name: "Alex Thompson", email: "alex.thompson@example.com" },
-  { id: "setter_2", name: "Maria Garcia", email: "maria.garcia@example.com" },
-  { id: "setter_3", name: "James Miller", email: "james.miller@example.com" },
-  { id: "setter_4", name: "Sophia Martinez", email: "sophia.martinez@example.com" },
-  { id: "setter_5", name: "William Taylor", email: "william.taylor@example.com" },
-  { id: "setter_6", name: "Olivia Anderson", email: "olivia.anderson@example.com" },
-  { id: "setter_7", name: "Michael Jackson", email: "michael.jackson@example.com" },
-  { id: "setter_8", name: "Emma White", email: "emma.white@example.com" },
-];
 
 type Props = {
   goBack: () => void;
@@ -51,14 +17,8 @@ const UpdateSetterOwnerAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
   const [actionName, setActionName] = useState(nodeData?.nodeName || "Update Setter Owner");
-  const [contactId, setContactId] = useState(nodeData?.nodeData?.contactId || "");
-  const [selectionType, setSelectionType] = useState<"round_robin" | "specific_setter">(
-    nodeData?.nodeData?.selectionType || "specific_setter"
-  );
-  const [setterOwnerId, setSetterOwnerId] = useState(nodeData?.nodeData?.setterOwnerId || "");
-  const [selectedSetters, setSelectedSetters] = useState<string[]>(
-    nodeData?.nodeData?.selectedSetters || []
-  );
+  const [inviteeEmail, setInviteeEmail] = useState(nodeData?.nodeData?.inviteeEmail || "");
+  const [setterEmail, setSetterEmail] = useState(nodeData?.nodeData?.setterEmail || "");
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -67,22 +27,14 @@ const UpdateSetterOwnerAction = ({ goBack, nodeData }: Props) => {
       nodeType: "crm_update_setter_owner",
       nodeName: actionName,
       nodeIcon: "add_update_fields",
-      nodeDescription: selectionType === "round_robin" 
-        ? `Update setter owners (round robin) for contact ${contactId}`
-        : `Update setter owner ${setterOwnerId} for contact ${contactId}`,
+      nodeDescription: `Update setter owner: ${setterEmail} for invitee: ${inviteeEmail}`,
       nodeData: {
-        contactId,
-        selectionType,
-        setterOwnerId: selectionType === "specific_setter" ? setterOwnerId : undefined,
-        selectedSetters: selectionType === "round_robin" ? selectedSetters : undefined,
+        inviteeEmail,
+        setterEmail,
       },
       properties: [
-        { key: "Contact", value: contactId },
-        { key: "Selection Type", value: selectionType === "round_robin" ? "Round Robin" : "Specific Setter" },
-        ...(selectionType === "round_robin" 
-          ? [{ key: "Setter Owners", value: selectedSetters.join(", ") }]
-          : [{ key: "Setter Owner", value: setterOwnerId }]
-        ),
+        { key: "Invitee Email address", value: inviteeEmail },
+        { key: "Setter Email address", value: setterEmail },
       ],
     };
 
@@ -90,11 +42,7 @@ const UpdateSetterOwnerAction = ({ goBack, nodeData }: Props) => {
     goBack();
   };
 
-  const isValid = contactId && (
-    selectionType === "round_robin" 
-      ? selectedSetters.length > 0 
-      : setterOwnerId
-  );
+  const isValid = inviteeEmail && setterEmail;
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -128,116 +76,33 @@ const UpdateSetterOwnerAction = ({ goBack, nodeData }: Props) => {
 
           <Separator />
 
-          {/* Contact */}
+          {/* Invitee Email address */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Contact
+              Invitee Email address
               <span className="text-red-500">*</span>
             </label>
-            <SelectWithVariablePanel
-              value={contactId}
-              onValueChange={setContactId}
-              placeholder="Select or map a field"
-              className="w-full h-12"
-              displayValue={contactId ? DUMMY_CONTACTS.find(c => c.id === contactId)?.name : undefined}
-              triggerContent={<RefreshCw className="w-4 h-4 text-gray-400" />}
+            <DynamicInput
+              placeholder="Enter invitee email address"
+              value={inviteeEmail}
+              onChange={setInviteeEmail}
             />
           </div>
 
-          {/* Selection Type */}
+          {/* Setter Email address */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Selection Type
+              Setter Email address
               <span className="text-red-500">*</span>
             </label>
-            <Select value={selectionType} onValueChange={(value) => setSelectionType(value as "round_robin" | "specific_setter")}>
-              <SelectTrigger className="w-full h-12">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="round_robin">Round Robin</SelectItem>
-                <SelectItem value="specific_setter">Specific Setter</SelectItem>
-              </SelectContent>
-            </Select>
+            <DynamicInput
+              placeholder="Enter setter email address"
+              value={setterEmail}
+              onChange={setSetterEmail}
+            />
           </div>
-
-          {/* Setter Owner */}
-          {selectionType === "round_robin" ? (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-                Setter Owners
-                <span className="text-red-500">*</span>
-              </label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="w-full h-12 flex items-center justify-between px-3 py-2 text-sm border border-gray-300 rounded-md bg-white hover:bg-gray-50">
-                    <span className={selectedSetters.length === 0 ? "text-gray-500" : ""}>
-                      {selectedSetters.length > 0
-                        ? `${selectedSetters.length} setter${selectedSetters.length > 1 ? "s" : ""} selected`
-                        : "Select setter owners"}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <RefreshCw className="w-4 h-4 text-gray-400" />
-                      <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-                    </div>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-full">
-                  <div className="p-2">
-                    <div className="max-h-48 overflow-y-auto">
-                      {DUMMY_SETTER_OWNERS.map((setter) => (
-                        <div
-                          key={setter.id}
-                          className="flex items-center gap-2 p-2 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => {
-                            if (selectedSetters.includes(setter.id)) {
-                              setSelectedSetters(selectedSetters.filter(id => id !== setter.id));
-                            } else {
-                              setSelectedSetters([...selectedSetters, setter.id]);
-                            }
-                          }}
-                        >
-                          <Checkbox
-                            checked={selectedSetters.includes(setter.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedSetters([...selectedSetters, setter.id]);
-                              } else {
-                                setSelectedSetters(selectedSetters.filter(id => id !== setter.id));
-                              }
-                            }}
-                          />
-                          <div className="flex items-center gap-2">
-                            <span>{setter.name}</span>
-                            <span className="text-xs text-gray-500">({setter.email})</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-                Setter Owner
-                <span className="text-red-500">*</span>
-              </label>
-              <SelectWithVariablePanel
-                value={setterOwnerId}
-                onValueChange={setSetterOwnerId}
-                placeholder="Select or map a field"
-                className="w-full h-12"
-                displayValue={setterOwnerId ? DUMMY_SETTER_OWNERS.find(s => s.id === setterOwnerId)?.name : undefined}
-                triggerContent={<RefreshCw className="w-4 h-4 text-gray-400" />}
-              />
-            </div>
-          )}
         </div>
       </div>
 

@@ -32,7 +32,7 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
   const [phoneNumber, setPhoneNumber] = useState(nodeData?.nodeData?.phoneNumber || "");
   const [secondaryPhoneNumber, setSecondaryPhoneNumber] = useState(nodeData?.nodeData?.secondaryPhoneNumber || "");
   const [secondaryEmail, setSecondaryEmail] = useState(nodeData?.nodeData?.secondaryEmail || "");
-  const [status, setStatus] = useState(nodeData?.nodeData?.status || "");
+  const [schedulingStatus, setSchedulingStatus] = useState(nodeData?.nodeData?.schedulingStatus || "");
 
   const saveAction = () => {
     if (!selectedNodeId) return;
@@ -50,7 +50,7 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
         phoneNumber,
         secondaryPhoneNumber,
         secondaryEmail,
-        status,
+        schedulingStatus,
       },
       properties: [
         { key: "Contact Id", value: contactId },
@@ -60,7 +60,7 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
         ...(phoneNumber ? [{ key: "Phone Number", value: phoneNumber }] : []),
         ...(secondaryPhoneNumber ? [{ key: "Secondary Phone Number", value: secondaryPhoneNumber }] : []),
         ...(secondaryEmail ? [{ key: "Secondary Email", value: secondaryEmail }] : []),
-        ...(status ? [{ key: "Status", value: status }] : []),
+        ...(schedulingStatus ? [{ key: "Scheduling Status", value: schedulingStatus }] : []),
       ],
     };
 
@@ -200,26 +200,24 @@ const UpdateContactAction = ({ goBack, nodeData }: Props) => {
             />
           </div>
 
-          {/* Status */}
+          {/* Scheduling Status */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Status
+              Scheduling Status
             </label>
-            <SelectWithVariablePanel
-              value={status}
-              onValueChange={setStatus}
-              placeholder="Select or map a field"
-              className="w-full h-12"
-              variableOptions={[
-                { value: "trigger.status", label: "Trigger: Status" },
-                { value: "previous_action.status", label: "Previous Action: Status" },
-              ]}
-            >
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-            </SelectWithVariablePanel>
+            <Select value={schedulingStatus} onValueChange={setSchedulingStatus}>
+              <SelectTrigger className="w-full h-12">
+                <SelectValue placeholder="Select scheduling status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="potential">POTENTIAL</SelectItem>
+                <SelectItem value="strategy_call_booked">STRATEGY CALL BOOKED</SelectItem>
+                <SelectItem value="qualified">QUALIFIED</SelectItem>
+                <SelectItem value="disqualified">DISQUALIFIED</SelectItem>
+                <SelectItem value="discovery_call_booked">DISCOVERY CALL BOOKED</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </div>

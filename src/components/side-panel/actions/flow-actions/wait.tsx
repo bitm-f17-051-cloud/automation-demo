@@ -161,9 +161,9 @@ const WaitAction = ({ goBack, nodeData }: WaitActionProps) => {
         <div className="space-y-4">
           {/* Action Name */}
           <div>
-            <Label className="text-sm font-medium text-gray-700 mb-1.5 block">Wait Name</Label>
+            <Label className="text-sm font-medium text-gray-700 mb-1.5 block">Action Name</Label>
             <Input
-              placeholder="Enter wait name"
+              placeholder="Enter action name"
               value={actionName}
               onChange={(e) => setActionName(e.target.value)}
               className="w-full"

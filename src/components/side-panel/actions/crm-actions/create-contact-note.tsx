@@ -6,14 +6,6 @@ import { DynamicTextarea } from "@/components/ui/dynamic-textarea";
 import PrimaryButton from "@/components/ui/primary-button";
 import { Separator } from "@/components/ui/separator";
 import { useWorkflowStore } from "@/store/workflow.store";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { SelectWithVariablePanel } from "@/components/ui/select-with-variable-panel";
 import { ChevronRight, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -25,8 +17,7 @@ type Props = {
 const CreateContactNoteAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
-  const [actionName, setActionName] = useState(nodeData?.nodeName || "Create a New Contact Note");
-  const [selectContact, setSelectContact] = useState(nodeData?.nodeData?.selectContact || "");
+  const [actionName, setActionName] = useState(nodeData?.nodeName || "Add a note");
   const [emailAddress, setEmailAddress] = useState(nodeData?.nodeData?.emailAddress || "");
   const [note, setNote] = useState(nodeData?.nodeData?.note || "");
 
@@ -37,15 +28,13 @@ const CreateContactNoteAction = ({ goBack, nodeData }: Props) => {
       nodeType: "crm_create_contact_note",
       nodeName: actionName,
       nodeIcon: "add_note",
-      nodeDescription: `Create note for contact: ${selectContact}`,
+      nodeDescription: `Add a note to contact`,
       nodeData: {
-        selectContact,
         emailAddress,
         note,
       },
       properties: [
-        { key: "Select Contact", value: selectContact },
-        ...(emailAddress ? [{ key: "Email Address", value: emailAddress }] : []),
+        ...(emailAddress ? [{ key: "Email", value: emailAddress }] : []),
         { key: "Note", value: note },
       ],
     };
@@ -54,14 +43,14 @@ const CreateContactNoteAction = ({ goBack, nodeData }: Props) => {
     goBack();
   };
 
-  const isValid = selectContact && note;
+  const isValid = note;
 
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-base font-semibold text-gray-900">Create a New Contact Note</h2>
+          <h2 className="text-base font-semibold text-gray-900">Add a note</h2>
           <button
             onClick={goBack}
             className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -88,34 +77,14 @@ const CreateContactNoteAction = ({ goBack, nodeData }: Props) => {
 
           <Separator />
 
-          {/* Select Contact */}
+          {/* Email */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
               <ChevronRight className="w-4 h-4 text-gray-400" />
-              Select Contact
-              <span className="text-red-500">*</span>
-            </label>
-            <SelectWithVariablePanel
-              value={selectContact}
-              onValueChange={setSelectContact}
-              placeholder="Select or map a field"
-              className="w-full h-12"
-              variableOptions={[
-                { value: "trigger.contact_id", label: "Trigger: Contact ID" },
-                { value: "trigger.user_id", label: "Trigger: User ID" },
-                { value: "previous_action.contact_id", label: "Previous Action: Contact ID" },
-              ]}
-            />
-          </div>
-
-          {/* Email Address */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              Email address
+              Email
             </label>
             <DynamicInput
-              placeholder="Enter email address"
+              placeholder="Enter email"
               value={emailAddress}
               onChange={setEmailAddress}
             />

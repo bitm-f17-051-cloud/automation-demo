@@ -49,10 +49,10 @@ export const CONTACT_ACTIONS = {
   },
   CREATE_CONTACT_NOTE: {
     value: 'crm_create_contact_note',
-    label: 'Create a New Contact Note',
+    label: 'Add a Note',
     icon: AddNoteIcon,
     category: 'CONTACT',
-    description: 'Creates a new contact note in iClosed.'
+    description: 'Add a note to a contact in iClosed.'
   },
   CREATE_TRANSACTION: {
     value: 'crm_create_transaction',
@@ -109,10 +109,10 @@ export const SEARCH_ACTIONS = {
   },
   SEARCH_CUSTOM_FIELDS: {
     value: 'search_custom_fields',
-    label: 'Search Custom Fields',
+    label: 'Search Field',
     icon: AddUpdateFieldsIcon,
     category: 'SEARCHES',
-    description: 'Search Custom fields by name and type.'
+    description: 'Search fields by name and type.'
   },
   SEARCH_TRANSACTIONS: {
     value: 'search_transactions',

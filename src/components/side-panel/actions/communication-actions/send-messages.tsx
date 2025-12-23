@@ -93,6 +93,22 @@ const MOCK_MEDIA_LIBRARY = [
   { id: "media-6", name: "Contact Card.png", url: "/media/contact-card.png", type: "image" },
 ];
 
+// Dummy attachments for presets
+const PRESET_DUMMY_ATTACHMENTS: Attachment[] = [
+  {
+    id: "preset-att-1",
+    name: "Company_Brochure.pdf",
+    type: "media_library",
+    url: "/media/preset-brochure.pdf",
+  },
+  {
+    id: "preset-att-2",
+    name: "Welcome_Banner.jpg",
+    type: "media_library",
+    url: "/media/preset-banner.jpg",
+  },
+];
+
 const SendMessagesAction = ({ goBack, nodeData }: Props) => {
   const { selectedNodeId, updateNodeConfig } = useWorkflowStore();
 
@@ -145,23 +161,33 @@ const SendMessagesAction = ({ goBack, nodeData }: Props) => {
     }
   }, []); // Only run on mount
 
-  // Fill Gmail body when preset is selected
+  // Fill Gmail body and add dummy attachments when preset is selected
   useEffect(() => {
     if (gmailMessageType === "preset" && selectedGmailPreset) {
       const preset = MESSAGE_PRESETS.find(p => p.value === selectedGmailPreset);
       if (preset) {
         setBody(preset.content);
+        // Add dummy attachments for preset
+        setAttachments(PRESET_DUMMY_ATTACHMENTS);
       }
+    } else if (gmailMessageType === "custom") {
+      // Clear preset attachments when switching to custom
+      setAttachments([]);
     }
   }, [selectedGmailPreset, gmailMessageType]);
 
-  // Fill message when preset is selected
+  // Fill message and add dummy attachments when preset is selected
   useEffect(() => {
     if (messageType === "preset" && selectedPreset) {
       const preset = MESSAGE_PRESETS.find(p => p.value === selectedPreset);
       if (preset) {
         setMessage(preset.content);
+        // Add dummy attachments for preset
+        setAttachments(PRESET_DUMMY_ATTACHMENTS);
       }
+    } else if (messageType === "custom") {
+      // Clear preset attachments when switching to custom
+      setAttachments([]);
     }
   }, [selectedPreset, messageType]);
 
@@ -608,31 +634,34 @@ const SendMessagesAction = ({ goBack, nodeData }: Props) => {
                   Attachments
                 </label>
                 
-                {/* Attachment Options */}
-                <div className="flex gap-2">
-                  <label className="flex-1 cursor-pointer">
-                    <input
-                      type="file"
-                      multiple
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
-                    />
-                    <div className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
-                      <Paperclip className="w-4 h-4 text-gray-600" />
-                      <span className="text-sm text-gray-700">Attach Files</span>
-                    </div>
-                  </label>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaLibrary(true)}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    <Image className="w-4 h-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">Media Library</span>
-                  </button>
-                </div>
+                {/* Attachment Options - Hide when preset is selected */}
+                {((channel === "gmail" && gmailMessageType !== "preset") || 
+                  ((channel === "whatsapp_personal" || channel === "whatsapp_cloud" || channel === "linq" || channel === "sendblue") && messageType !== "preset")) && (
+                  <div className="flex gap-2">
+                    <label className="flex-1 cursor-pointer">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                      />
+                      <div className="flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+                        <Paperclip className="w-4 h-4 text-gray-600" />
+                        <span className="text-sm text-gray-700">Attach Files</span>
+                      </div>
+                    </label>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaLibrary(true)}
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      <Image className="w-4 h-4 text-gray-600" />
+                      <span className="text-sm text-gray-700">Media Library</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Selected Attachments */}
                 {attachments.length > 0 && (
@@ -657,13 +686,17 @@ const SendMessagesAction = ({ goBack, nodeData }: Props) => {
                             {attachment.type === "media_library" ? "From Media Library" : "Uploaded File"}
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => removeAttachment(attachment.id)}
-                          className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
-                        >
-                          <X className="w-4 h-4 text-gray-500" />
-                        </button>
+                        {/* Hide remove button when preset is selected */}
+                        {((channel === "gmail" && gmailMessageType !== "preset") || 
+                          ((channel === "whatsapp_personal" || channel === "whatsapp_cloud" || channel === "linq" || channel === "sendblue") && messageType !== "preset")) && (
+                          <button
+                            type="button"
+                            onClick={() => removeAttachment(attachment.id)}
+                            className="flex-shrink-0 p-1 hover:bg-gray-200 rounded transition-colors"
+                          >
+                            <X className="w-4 h-4 text-gray-500" />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>

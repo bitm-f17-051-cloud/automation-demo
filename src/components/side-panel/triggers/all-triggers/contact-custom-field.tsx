@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { SelectWithFilterPanel } from "@/components/ui/select-with-filter-panel";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { XIcon, Check, Trash2, Plus, Sparkles, RefreshCw, ChevronRight, Search as SearchIcon } from "lucide-react";
-import { useState } from "react";
+import { XIcon, Check, Trash2, Plus, Sparkles, RefreshCw, ChevronRight, Search as SearchIcon, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { FieldUpdatedIcon } from "@/components/assets/icons/triggers";
 import {
@@ -128,6 +128,30 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
   const [triggerName, setTriggerName] = useState<string>(nodeData?.nodeName || "Field Updated" || "Trigger");
   const [selectedObjectType, setSelectedObjectType] = useState<string | null>(nodeData?.nodeData?.objectType || null);
   const [isObjectTypePopoverOpen, setIsObjectTypePopoverOpen] = useState(false);
+  const [isLoadingFields, setIsLoadingFields] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Simulate initial API call to fetch available fields on component mount
+  useEffect(() => {
+    setIsLoadingFields(true);
+    // Simulate initial API delay
+    setTimeout(() => {
+      setIsLoadingFields(false);
+    }, 1500);
+  }, []);
+
+  // Simulate API call when popover opens
+  useEffect(() => {
+    if (isObjectTypePopoverOpen) {
+      setIsLoadingFields(true);
+      // Simulate API delay
+      setTimeout(() => {
+        setIsLoadingFields(false);
+      }, 1000);
+    } else {
+      setSearchQuery("");
+    }
+  }, [isObjectTypePopoverOpen]);
 
   // Row-based filters with AND/OR logic
   type FilterRow = { 
@@ -355,7 +379,11 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
                     <span>Select field</span>
                   )}
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                {isLoadingFields ? (
+                  <Loader2 className="w-4 h-4 text-blue-600 animate-spin" />
+                ) : (
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                )}
               </button>
             </PopoverTrigger>
             <PopoverContent className="p-0 w-full" align="start">
@@ -363,31 +391,52 @@ const ContactCustomFieldTrigger = ({ goBack, nodeData }: Props) => {
                 <div className="p-3 relative">
                   <Input
                     placeholder="Search"
-                    className="pl-[36px] py-1.5"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      // Simulate API call on search
+                      if (e.target.value.length > 0) {
+                        setIsLoadingFields(true);
+                        setTimeout(() => setIsLoadingFields(false), 800);
+                      }
+                    }}
+                    className="pl-[36px] pr-[36px] py-1.5"
                   />
                   <SearchIcon
                     className="w-4 h-4 text-gray-800 opacity-50 absolute left-6 top-1/2 -translate-y-1/2"
                     strokeWidth={3}
                   />
+                  {isLoadingFields && (
+                    <Loader2 className="w-4 h-4 text-blue-600 absolute right-6 top-1/2 -translate-y-1/2 animate-spin" />
+                  )}
                 </div>
-                {ObjectTypeData?.map((object) => (
-                  <div
-                    key={object.type}
-                    onClick={() => {
-                      setSelectedObjectType(object.type);
-                      setIsObjectTypePopoverOpen(false);
-                    }}
-                    className="flex items-center justify-between px-[14px] py-1.5 hover:bg-blue-50 cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <object.icon className="w-4 h-4" />
-                      <span className="font-medium text-sm capitalize">
-                        {object.name}
-                      </span>
+                {isLoadingFields ? (
+                  <div className="flex items-center justify-center py-8 px-4">
+                    <div className="flex flex-col items-center gap-2">
+                      <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                      <p className="text-sm text-gray-500">Loading fields...</p>
                     </div>
-                    <ChevronRight className="w-4 h-4 text-gray-800 opacity-50" />
                   </div>
-                ))}
+                ) : (
+                  ObjectTypeData?.map((object) => (
+                    <div
+                      key={object.type}
+                      onClick={() => {
+                        setSelectedObjectType(object.type);
+                        setIsObjectTypePopoverOpen(false);
+                      }}
+                      className="flex items-center justify-between px-[14px] py-1.5 hover:bg-blue-50 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-2">
+                        <object.icon className="w-4 h-4" />
+                        <span className="font-medium text-sm capitalize">
+                          {object.name}
+                        </span>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-800 opacity-50" />
+                    </div>
+                  ))
+                )}
               </div>
             </PopoverContent>
           </Popover>
