@@ -11,9 +11,9 @@ const Header = () => {
   const [isDraft, setIsDraft] = useState(true);
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-200 h-14">
+    <header className="flex flex-wrap items-center justify-between px-4 py-2 bg-white border-b border-gray-200 min-h-[56px] gap-2">
       {/* Left: Back button + Tabs */}
-      <div className="flex items-center gap-4 flex-1">
+      <div className="flex items-center gap-4 flex-shrink-0">
         <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -74,7 +74,7 @@ const Header = () => {
       </div>
 
       {/* Center: Workflow name with edit icon */}
-      <div className="flex items-center gap-2 flex-1 justify-center">
+      <div className="flex items-center gap-2 flex-shrink-0 order-3 lg:order-2 w-full lg:w-auto lg:flex-1 lg:justify-center">
         {!editingName ? (
           <div className="flex items-center gap-2">
             <span className="text-base font-semibold text-gray-900">
@@ -118,7 +118,7 @@ const Header = () => {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-3 flex-1 justify-end">
+      <div className="flex items-center gap-2 md:gap-3 flex-shrink-0 order-2 lg:order-3 ml-auto">
         {/* Draft label and toggle */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">Draft</span>
@@ -137,12 +137,20 @@ const Header = () => {
         </div>
 
         {/* Execute workflow button */}
-        <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+        <button className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <span>Execute workflow</span>
+        </button>
+
+        {/* Execute workflow button - Mobile (icon only) */}
+        <button className="flex md:hidden p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-gray-300 rounded-md transition-colors" title="Execute workflow">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </button>
 
         {/* History icon */}
