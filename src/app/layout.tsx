@@ -35,8 +35,8 @@ export default function RootLayout({
           <VariableSelectorProvider>
             <FilterTypeSelectorProvider>
               <WorkflowTabProvider>
-                <Header />
-                <main className="h-[calc(100vh-52px)] flex flex-col bg-gray-50">
+                {/* <Header /> */}
+                <main className="h-screen flex flex-col bg-gray-50">
                   {children}
                 </main>
               </WorkflowTabProvider>
