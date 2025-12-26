@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -23,51 +23,24 @@ import "@xyflow/react/dist/style.css";
 import { useWorkflowStore } from "@/store/workflow.store";
 import { nodeTypes } from "@/components/nodes";
 import type { WorkflowNode, WorkflowEdge } from "@/lib/worker-types";
-import { useWorkflowWorker } from "@/hooks/useWorkflowWorker";
-// removed default canvas options and minimap
-import { v4 as uuidv4 } from "uuid";
-import { EMPTY_ACTION_NODE, EMPTY_TRIGGER_NODE } from "@/store/workflow.store";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { CanvasControls } from "./controls";
+import { ExecutionLogs } from "../execution-logs";
 
 interface WorkflowCanvasProps {
   className?: string;
+  activeTab?: "builder" | "executions" | "published";
+  executions?: Array<{ id: number; workflow: string; status: "Success" | "Error"; started: string; runtime: string }>;
+  testExecutions?: Array<{ id: number; workflow: string; status: "Success" | "Error"; started: string; runtime: string }>;
 }
 
-const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
+const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ 
+  className, 
+  activeTab = "builder",
+  executions = [],
+  testExecutions = []
+}) => {
   const reactFlowInstance = useReactFlow();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [workflowName, setWorkflowName] = useState("My workflow");
-  const [editingName, setEditingName] = useState(false);
-  const [nameDraft, setNameDraft] = useState("My workflow");
-  const [active, setActive] = useState(false);
-  const [activeTab, setActiveTab] = useState<"editor" | "executions" | "published">("editor");
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [workflowOwner] = useState("John Doe"); // In real app, get from auth
-  const [workflowCreated] = useState(new Date("2024-11-01"));
-  const [workflowId] = useState(() => `wf_${Math.random().toString(36).substring(2, 11)}`);
-  
-  // Initialize lastSaved on client only
-  useEffect(() => {
-    if (!lastSaved) {
-      setLastSaved(new Date());
-    }
-  }, [lastSaved]);
-  const [executions] = useState(
-    [
-      { id: 62, workflow: "My workflow", status: "Error",   started: "Starting soon",     runtime: "-0.002s" },
-      { id: 61, workflow: "My workflow", status: "Success", started: "Nov 6, 14:54:56",   runtime: "1.354s" },
-      { id: 60, workflow: "My workflow", status: "Success", started: "Nov 6, 14:39:23",   runtime: "1.696s" },
-      { id: 59, workflow: "My workflow", status: "Success", started: "Nov 6, 14:37:21",   runtime: "204ms"  },
-    ] as Array<{ id: number; workflow: string; status: "Success" | "Error"; started: string; runtime: string }>
-  );
-  const [testExecutions] = useState(
-    [
-      { id: 5, workflow: "My workflow", status: "Success", started: "Nov 7, 10:01:22", runtime: "418ms" },
-      { id: 4, workflow: "My workflow", status: "Success", started: "Nov 7, 09:59:03", runtime: "1.012s" },
-    ] as Array<{ id: number; workflow: string; status: "Success" | "Error"; started: string; runtime: string }>
-  );
-  const [showTestExecutions, setShowTestExecutions] = useState(false);
 
   const {
     nodes,
@@ -79,78 +52,7 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
     selectNode,
     selectEdge,
     clearSelection,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    getHistory,
-    setLayouting,
   } = useWorkflowStore();
-
-  const { isReady, computeLayout } = useWorkflowWorker();
-
-  const onZoomIn = () => {
-    reactFlowInstance.zoomIn();
-  };
-  const onZoomOut = () => {
-    reactFlowInstance.zoomOut();
-  };
-
-  const onFixLayout = useCallback(async () => {
-    if (!isReady || nodes.length === 0) return;
-    
-    setLayouting(true);
-    try {
-      const layoutResult = await computeLayout(nodes, edges);
-      setNodes(layoutResult.nodes);
-      setEdges(layoutResult.edges);
-    } catch (error) {
-      console.error('Layout computation failed:', error);
-    } finally {
-      setLayouting(false);
-    }
-  }, [nodes, edges, isReady, computeLayout, setNodes, setEdges, setLayouting]);
-
-  const onAddActionOrTrigger = () => {
-    const newNode: WorkflowNode = {
-      ...(EMPTY_ACTION_NODE as WorkflowNode),
-      id: uuidv4(),
-      position: { x: 400, y: 240 },
-    };
-    useWorkflowStore.getState().addNode(newNode);
-  };
-
-  const onAddTrigger = () => {
-    const currentStartNodes = nodes.filter((n) => n.type === "start");
-    const baseY = 80;
-    const horizontalSpacing = 30; // Space between triggers
-    const triggerWidth = (EMPTY_TRIGGER_NODE.measured?.width as number) || 336;
-    let newX = 120; // Start position for first trigger
-    
-    if (currentStartNodes.length > 0) {
-      // Find the rightmost trigger and add spacing
-      const rightMost = currentStartNodes.reduce(
-        (max, n) => Math.max(max, (n.position?.x || 0) + ((n.measured?.width as number) || triggerWidth)),
-        0
-      );
-      newX = rightMost + horizontalSpacing;
-    }
-    
-    const newTrigger: WorkflowNode = {
-      id: uuidv4(),
-      type: "start",
-      position: { x: newX, y: baseY },
-      measured: { 
-        width: triggerWidth, 
-        height: (EMPTY_TRIGGER_NODE.measured?.height as number) || 78 
-      },
-      data: {
-        label: "Trigger",
-        labelIcon: "trigger",
-      },
-    };
-    useWorkflowStore.getState().addNode(newTrigger);
-  };
 
   // Convert store nodes/edges to React Flow format
   const reactFlowNodes: Node[] = useMemo(() => {
@@ -281,34 +183,6 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
     [edges, setEdges]
   );
 
-  // Keyboard shortcuts for undo/redo
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        (event.ctrlKey || event.metaKey) &&
-        event.key === "z" &&
-        !event.shiftKey
-      ) {
-        event.preventDefault();
-        if (canUndo()) {
-          undo();
-        }
-      } else if (
-        ((event.ctrlKey || event.metaKey) && event.key === "y") ||
-        ((event.ctrlKey || event.metaKey) &&
-          event.shiftKey &&
-          event.key === "Z")
-      ) {
-        event.preventDefault();
-        if (canRedo()) {
-          redo();
-        }
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo, canUndo, canRedo]);
 
   // Fit view when nodes change
   useEffect(() => {
@@ -326,232 +200,10 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
   return (
     <div
       ref={containerRef}
-      className={`${selectedNodeId ? "w-[70vw]" : "w-[100vw]"} h-full ${
+      className={`${selectedNodeId ? "w-[70vw]" : "w-[100vw]"} h-full relative ${
         className || ""
       }`}
     >
-      {/* Header bar with requested controls */}
-      <TooltipProvider>
-        <div className="absolute top-0 left-0 right-0 z-10 flex items-center px-4 py-3 bg-white border-b">
-          {/* Left: Back button + Workflow name */}
-          <div className="flex items-center gap-3 flex-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                  <span className="font-medium">Back</span>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Go back to workflows list</p>
-              </TooltipContent>
-            </Tooltip>
-          
-          {!editingName ? (
-            <button
-              className="text-base font-medium text-gray-900 px-2 py-1 rounded hover:bg-gray-50 transition-colors"
-              onClick={() => {
-                setNameDraft(workflowName);
-                setEditingName(true);
-              }}
-              title="Edit workflow name"
-            >
-              {workflowName || "Workflow name"}
-            </button>
-          ) : (
-            <input
-              value={nameDraft}
-              onChange={(e) => setNameDraft(e.target.value)}
-              className="h-8 px-2 bg-transparent border border-gray-300 rounded text-base text-gray-900 outline-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Workflow name"
-              aria-label="Edit workflow name"
-              autoFocus
-              onBlur={() => {
-                setWorkflowName(nameDraft.trim() || "Workflow name");
-                setEditingName(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setWorkflowName(nameDraft.trim() || "Workflow name");
-                  setEditingName(false);
-                }
-                if (e.key === "Escape") {
-                  setNameDraft(workflowName);
-                  setEditingName(false);
-                }
-              }}
-            />
-          )}
-        </div>
-
-          {/* Center: Tabs */}
-          <div className="flex items-center gap-1 flex-1 justify-center">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setActiveTab("editor")}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors relative ${
-                    activeTab === "editor" 
-                      ? "text-blue-600" 
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Editor
-                  {activeTab === "editor" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Edit and design your workflow</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setActiveTab("executions")}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors relative ${
-                    activeTab === "executions" 
-                      ? "text-blue-600" 
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Execution logs
-                  {activeTab === "executions" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View workflow execution history and logs</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => setActiveTab("published")}
-                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-colors relative ${
-                    activeTab === "published" 
-                      ? "text-blue-600" 
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  Published version
-                  {activeTab === "published" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600" />
-                  )}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>View the published version of your workflow</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-3 flex-1 justify-end">
-            {/* Draft saved status */}
-            <div className="text-sm text-gray-500" suppressHydrationWarning>
-              {isSaving ? "Saving..." : "Draft saved"}
-            </div>
-            
-            {/* History/Clock icon */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Version history</p>
-              </TooltipContent>
-            </Tooltip>
-            
-            {/* Play/Test button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Test workflow</p>
-              </TooltipContent>
-            </Tooltip>
-
-          {/* Active toggle */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-700">Active</span>
-                <button
-                  onClick={() => setActive((v) => !v)}
-                  className={`w-11 h-6 rounded-full border relative transition-colors ${
-                    active ? "bg-green-500 border-green-500" : "bg-gray-200 border-gray-300"
-                  }`}
-                  aria-label="Toggle active"
-                  aria-pressed={active}
-                >
-                  <span
-                    className={`absolute top-[2px] left-[2px] w-5 h-5 bg-white rounded-full transform transition-transform ${
-                      active ? "translate-x-[26px]" : "translate-x-0"
-                    }`}
-                  />
-                </button>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{active ? "Workflow is active. Click to deactivate." : "Workflow is inactive. Click to activate."}</p>
-            </TooltipContent>
-          </Tooltip>
-          
-          {/* Save & publish button */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button 
-                className="px-4 py-2 rounded-md text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
-                onClick={() => {
-                  setIsSaving(true);
-                  setTimeout(() => {
-                    setIsSaving(false);
-                setLastSaved(new Date());
-              }, 1000);
-            }}
-          >
-            Save &amp; publish
-          </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Save and publish workflow</p>
-            </TooltipContent>
-          </Tooltip>
-          </div>
-        </div>
-      </TooltipProvider>
 
       <ReactFlow
         nodes={reactFlowNodes}
@@ -583,232 +235,13 @@ const WorkflowCanvasInner: React.FC<WorkflowCanvasProps> = ({ className }) => {
         <Background />
       </ReactFlow>
 
-      {/* Removed old canvas options and minimap as requested */}
+      {/* Canvas Controls */}
+      <CanvasControls />
 
-      {/* Executions table view (overlay, hides canvas behind) */}
-      {activeTab === "executions" && (
-        <div className="absolute top-14 left-4 right-4 bottom-4 z-20 bg-white border rounded-lg shadow-sm overflow-hidden">
-          <div className="h-full w-full overflow-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="px-4 py-3 font-medium">Workflow</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Started</th>
-                  <th className="px-4 py-3 font-medium">Run Time</th>
-                  <th className="px-4 py-3 font-medium">Exec. ID</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {executions.map((row) => {
-                  const isError = row.status === "Error";
-                  return (
-                    <tr key={row.id} className={`border-b last:border-b-0 ${isError ? "bg-red-50/70" : ""}`}>
-                      <td className="px-4 py-3 text-gray-900">{row.workflow}</td>
-                      <td className="px-4 py-3">
-                        <div className="inline-flex items-center gap-2">
-                          <span
-                            className={`inline-block w-3 h-3 rounded-full ${
-                              isError ? "bg-red-500" : "bg-green-500"
-                            }`}
-                          />
-                          <span className={`${isError ? "text-red-700" : "text-green-700"}`}>{row.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-800">{row.started}</td>
-                      <td className="px-4 py-3 text-gray-800">{row.runtime}</td>
-                      <td className="px-4 py-3 text-gray-800">{row.id}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-3 text-gray-600">
-                          <button className="w-7 h-7 rounded-md border bg-white grid place-items-center" title="Details">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <path d="M10 3v4L5 17a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-5-10V3zM9 7h6" />
-                            </svg>
-                          </button>
-                          <button className="w-7 h-7 rounded-md border bg-white grid place-items-center" title="More">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <circle cx="12" cy="6" r="1.5" />
-                              <circle cx="12" cy="12" r="1.5" />
-                              <circle cx="12" cy="18" r="1.5" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      {/* Execution Logs Overlay */}
+      {activeTab === "executions" && executions.length > 0 && (
+        <ExecutionLogs executions={executions} testExecutions={testExecutions} />
       )}
-      {showTestExecutions && (
-        <div className="absolute top-14 left-4 right-4 bottom-4 z-30 bg-white border rounded-lg shadow-sm overflow-hidden">
-          <div className="h-full w-full overflow-auto">
-            <div className="flex items-center justify-between px-4 py-2 border-b bg-gray-50">
-              <div className="text-sm font-medium text-gray-800">Test Executions</div>
-              <button
-                className="px-2 h-8 rounded-md border bg-white text-sm"
-                onClick={() => setShowTestExecutions(false)}
-                title="Close"
-              >
-                Close
-              </button>
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr className="text-left text-gray-600 border-b">
-                  <th className="px-4 py-3 font-medium">Workflow</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Started</th>
-                  <th className="px-4 py-3 font-medium">Run Time</th>
-                  <th className="px-4 py-3 font-medium">Exec. ID</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testExecutions.length === 0 && (
-                  <tr>
-                    <td className="px-4 py-8 text-center text-gray-500" colSpan={6}>
-                      No test executions yet
-                    </td>
-                  </tr>
-                )}
-                {testExecutions.map((row) => {
-                  const isError = row.status === "Error";
-                  return (
-                    <tr key={row.id} className={`border-b last:border-b-0 ${isError ? "bg-red-50/70" : ""}`}>
-                      <td className="px-4 py-3 text-gray-900">{row.workflow}</td>
-                      <td className="px-4 py-3">
-                        <div className="inline-flex items-center gap-2">
-                          <span
-                            className={`inline-block w-3 h-3 rounded-full ${
-                              isError ? "bg-red-500" : "bg-green-500"
-                            }`}
-                          />
-                          <span className={`${isError ? "text-red-700" : "text-green-700"}`}>{row.status}</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-gray-800">{row.started}</td>
-                      <td className="px-4 py-3 text-gray-800">{row.runtime}</td>
-                      <td className="px-4 py-3 text-gray-800">{row.id}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-3 text-gray-600">
-                          <button className="w-7 h-7 rounded-md border bg-white grid place-items-center" title="Details">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <path d="M10 3v4L5 17a3 3 0 0 0 3 4h8a3 3 0 0 0 3-4l-5-10V3zM9 7h6" />
-                            </svg>
-                          </button>
-                          <button className="w-7 h-7 rounded-md border bg-white grid place-items-center" title="More">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                              <circle cx="12" cy="6" r="1.5" />
-                              <circle cx="12" cy="12" r="1.5" />
-                              <circle cx="12" cy="18" r="1.5" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Canvas Controls - Bottom Left */}
-      <div className="absolute bottom-4 left-4 z-10 flex items-center gap-2">
-        {/* Zoom Controls Group */}
-        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
-          <button
-            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
-            onClick={onZoomOut}
-            title="Zoom out"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-              <path d="M8 11h6"/>
-            </svg>
-          </button>
-          <button
-            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
-            onClick={onZoomIn}
-            title="Zoom in"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-              <path d="M11 8v6M8 11h6"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Fullscreen & Document Group */}
-        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
-          <button
-            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
-            onClick={() => reactFlowInstance.fitView({ padding: 0.2, minZoom: 0.1, maxZoom: 1.5 })}
-            title="Fit to screen"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-            </svg>
-          </button>
-          <button
-            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
-            onClick={onFixLayout}
-            title="Fix layout"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/>
-              <path d="M12 8v8M8 12h8"/>
-            </svg>
-          </button>
-          <button
-            className="w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors"
-            onClick={() => {}}
-            title="Document"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/>
-            </svg>
-          </button>
-        </div>
-
-        {/* Undo/Redo Group */}
-        <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
-          <button
-            className={`w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors ${
-              !canUndo() ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            onClick={undo}
-            disabled={!canUndo()}
-            title="Undo"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 7v6h6"/>
-              <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
-            </svg>
-          </button>
-          <button
-            className={`w-8 h-8 rounded flex items-center justify-center hover:bg-white transition-colors ${
-              !canRedo() ? "opacity-50 cursor-not-allowed" : ""
-            }`}
-            onClick={redo}
-            disabled={!canRedo()}
-            title="Redo"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 7v6h-6"/>
-              <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
-            </svg>
-          </button>
-        </div>
-      </div>
     </div>
   );
 };

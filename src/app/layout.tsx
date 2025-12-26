@@ -5,6 +5,7 @@ import Header from "@/components/header";
 import ReactQueryProvider from "@/lib/react-query-provider";
 import { VariableSelectorProvider } from "@/contexts/variable-selector-context";
 import { FilterTypeSelectorProvider } from "@/contexts/filter-type-selector-context";
+import { WorkflowTabProvider } from "@/contexts/workflow-tab-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,10 +34,12 @@ export default function RootLayout({
         <ReactQueryProvider>
           <VariableSelectorProvider>
             <FilterTypeSelectorProvider>
-              <Header />
-              <main className="h-[calc(100vh-52px)] flex flex-col bg-gray-50">
-                {children}
-              </main>
+              <WorkflowTabProvider>
+                <Header />
+                <main className="h-[calc(100vh-52px)] flex flex-col bg-gray-50">
+                  {children}
+                </main>
+              </WorkflowTabProvider>
             </FilterTypeSelectorProvider>
           </VariableSelectorProvider>
         </ReactQueryProvider>
